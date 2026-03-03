@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Autonomous Agent Blueprint — Enterprise White Paper</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #010926;
+  --blue: #0058FF;
+  --blue-light: #4d8cff;
+  --blue-pale: #e8f0ff;
+  --blue-faint: #f0f5ff;
+  --bg: #fafafa;
+  --white: #ffffff;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --font-serif: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  --font-sans: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "Fira Code", Consolas, "Courier New", monospace;
+  --sidebar-w: 280px;
+  --content-max: 820px;
+  --shadow-sm: 0 1px 3px rgba(1,9,38,0.08);
+  --shadow-md: 0 4px 12px rgba(1,9,38,0.1);
+  --shadow-lg: 0 8px 24px rgba(1,9,38,0.12);
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  font-family: var(--font-serif);
+  color: var(--gray-800);
+  background: var(--bg);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== SIDEBAR NAV ===== */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--navy);
+  color: rgba(255,255,255,0.85);
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 28px 0 40px;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 0 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 16px;
+}
+
+.sidebar-header h3 {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--blue-light);
+}
+
+.sidebar nav a {
+  display: block;
+  padding: 7px 20px 7px 24px;
+  color: rgba(255,255,255,0.65);
+  text-decoration: none;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.sidebar nav a:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+
+.sidebar nav a.active {
+  color: #fff;
+  border-left-color: var(--blue);
+  background: rgba(0,88,255,0.12);
+  font-weight: 600;
+}
+
+.sidebar nav a.sub {
+  padding-left: 40px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+}
+
+.sidebar nav a.sub.active { color: rgba(255,255,255,0.9); }
+
+.sidebar nav .nav-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 10px 20px;
+}
+
+/* Hamburger */
+.hamburger {
+  display: none;
+  position: fixed;
+  top: 16px; left: 16px;
+  z-index: 1100;
+  width: 42px; height: 42px;
+  background: var(--navy);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+}
+
+.hamburger span {
+  display: block;
+  width: 22px; height: 2px;
+  background: #fff;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+.hamburger span + span { margin-top: 5px; }
+.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(3px, 5px); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(3px, -5px); }
+
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+}
+.overlay.show { display: block; }
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+}
+
+/* ===== HERO ===== */
+.hero {
+  background: linear-gradient(135deg, var(--navy) 0%, #0a1a4a 60%, #0d2266 100%);
+  color: #fff;
+  padding: 100px 40px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 30% 50%, rgba(0,88,255,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 80%, rgba(0,88,255,0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero > * { position: relative; z-index: 1; }
+
+.hero-label {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--blue-light);
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-family: var(--font-sans);
+  font-size: 2.8rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.hero .subtitle {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.8);
+  max-width: 640px;
+  margin: 0 auto 28px;
+}
+
+.hero .authors {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 4px;
+}
+
+.hero .date {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+}
+
+/* Abstract box */
+.abstract-box {
+  max-width: 720px;
+  margin: 48px auto 0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-lg);
+  padding: 32px 36px;
+  text-align: left;
+  backdrop-filter: blur(12px);
+}
+
+.abstract-box h2 {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--blue-light);
+  margin-bottom: 14px;
+}
+
+.abstract-box p {
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 12px;
+}
+
+.abstract-box p:last-child { margin-bottom: 0; }
+.abstract-box strong { color: #fff; }
+
+/* ===== CONTENT SECTIONS ===== */
+.content-wrap {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+
+.section {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 48px 48px 40px;
+  margin-bottom: 32px;
+  border: 1px solid var(--gray-200);
+}
+
+.section:target { box-shadow: 0 0 0 2px var(--blue), var(--shadow-md); }
+
+/* Headings */
+h2 {
+  font-family: var(--font-sans);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 8px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+h2 .section-num {
+  color: var(--blue);
+  font-weight: 800;
+}
+
+h3 {
+  font-family: var(--font-sans);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-top: 36px;
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+
+h4 {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  margin-top: 28px;
+  margin-bottom: 10px;
+}
+
+.section-intro {
+  font-size: 1.05rem;
+  color: var(--gray-600);
+  font-style: italic;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+/* Body text */
+p { margin-bottom: 16px; }
+
+strong { color: var(--gray-900); }
+
+blockquote {
+  border-left: 4px solid var(--blue);
+  background: var(--blue-faint);
+  padding: 16px 24px;
+  margin: 24px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-style: italic;
+  color: var(--gray-700);
+}
+
+blockquote p { margin-bottom: 0; }
+
+/* Lists */
+ul, ol {
+  margin: 12px 0 16px 24px;
+}
+
+li {
+  margin-bottom: 6px;
+  line-height: 1.65;
+}
+
+li::marker { color: var(--blue); }
+
+/* ===== TABLES ===== */
+.table-wrap {
+  overflow-x: auto;
+  margin: 20px 0 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-200);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+thead {
+  background: var(--navy);
+  color: #fff;
+}
+
+th {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: top;
+}
+
+tbody tr:nth-child(even) { background: var(--gray-50); }
+tbody tr:hover { background: var(--blue-pale); }
+
+/* ===== CODE ===== */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--gray-100);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--navy);
+}
+
+pre {
+  background: var(--gray-900);
+  color: #e5e7eb;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  margin: 20px 0;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  box-shadow: var(--shadow-sm);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* ===== FIGURES ===== */
+.figure {
+  margin: 32px 0;
+  text-align: center;
+}
+
+.figure svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.figure-caption {
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  color: var(--gray-500);
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.figure-caption strong {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+/* Chart containers */
+.chart-container {
+  position: relative;
+  margin: 24px auto;
+  max-width: 600px;
+}
+
+.chart-container canvas {
+  max-width: 100%;
+}
+
+/* ===== APPENDIX ===== */
+.appendix-label {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--blue);
+  margin-bottom: 4px;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  text-align: center;
+  padding: 48px 32px 40px;
+  color: var(--gray-400);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  border-top: 1px solid var(--gray-200);
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .hamburger { display: flex; }
+  .main { margin-left: 0; }
+  .hero { padding: 80px 24px 60px; }
+  .hero h1 { font-size: 2.1rem; }
+  .content-wrap { padding: 24px 16px 60px; }
+  .section { padding: 32px 24px 28px; }
+}
+
+@media (max-width: 640px) {
+  .hero h1 { font-size: 1.7rem; }
+  .hero .subtitle { font-size: 1rem; }
+  .abstract-box { padding: 24px 20px; }
+  h2 { font-size: 1.35rem; }
+  h3 { font-size: 1.05rem; }
+  .section { padding: 24px 18px 22px; }
+  th, td { padding: 8px 10px; font-size: 0.82rem; }
+}
+
+/* ===== PRINT ===== */
+@media print {
+  .sidebar, .hamburger, .overlay { display: none !important; }
+  .main { margin-left: 0; }
+  .hero { background: var(--navy) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .section { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+  .figure { page-break-inside: avoid; }
+  body { font-size: 11pt; }
+  .content-wrap { padding: 0; max-width: 100%; }
+  .chart-container { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hamburger toggle -->
+<button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+<div class="overlay" id="overlay"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h3>Table of Contents</h3>
+  </div>
+  <nav id="toc">
+    <a href="#s1" data-section="s1">1. Introduction</a>
+    <a href="#s2" data-section="s2">2. Philosophical Foundations</a>
+    <a href="#s3" data-section="s3">3. System Architecture</a>
+    <a href="#s4" data-section="s4">4. Memory &amp; Identity Continuity</a>
+    <a href="#s5" data-section="s5">5. Graduated Autonomy</a>
+    <a href="#s6" data-section="s6">6. Operational Workflows</a>
+    <a href="#s7" data-section="s7">7. Organic Tool Development</a>
+    <a href="#s8" data-section="s8">8. Proactive Monitoring</a>
+    <a href="#s9" data-section="s9">9. Multi-System Integration</a>
+    <a href="#s10" data-section="s10">10. Collaboration Patterns</a>
+    <a href="#s11" data-section="s11">11. Self-Reflection</a>
+    <a href="#s12" data-section="s12">12. Security &amp; Safety</a>
+    <a href="#s13" data-section="s13">13. Implementation Blueprint</a>
+    <a href="#s14" data-section="s14">14. Conclusion</a>
+    <div class="nav-divider"></div>
+    <a href="#appendix-a" data-section="appendix-a" class="sub">Appendix A: File Structure</a>
+    <a href="#appendix-b" data-section="appendix-b" class="sub">Appendix B: Scheduled Jobs</a>
+    <a href="#appendix-c" data-section="appendix-c" class="sub">Appendix C: Integrations</a>
+  </nav>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-label">Enterprise White Paper</div>
+  <h1>The Autonomous Agent Blueprint</h1>
+  <p class="subtitle">Building Trust-First AI Teammates — A Framework for Enterprise-Grade Agentic Operations</p>
+  <p class="authors">By Saša Savić</p>
+  <p class="date">February 2026</p>
+
+  <div class="abstract-box">
+    <h2>Abstract</h2>
+    <p>This paper presents a comprehensive framework for deploying autonomous AI agents as operational team members within enterprise environments. Drawing from a live implementation completed in eleven days — from initial deployment to full operational autonomy — we document the architectural patterns, trust models, memory systems, and governance mechanisms required to make autonomous AI agency viable in production.</p>
+    <p>Our central thesis: <strong>the primary barrier to effective AI agents is not model capability, but trust architecture.</strong> Current large language models possess sufficient reasoning and tool-use abilities. What remains absent in most deployments is the systematic scaffolding — graduated autonomy, externalized discipline, identity continuity, and structured feedback loops — that transforms a capable model into a reliable teammate.</p>
+    <p>We present this framework through three complementary lenses: the philosophical foundations that govern agent-human relationships, the technical architecture that enables persistent autonomous operation, and the operational patterns that emerge from real-world deployment.</p>
+    <p>All patterns described herein are derived from production deployment, not theoretical design. The cron jobs are executing. The monitoring dashboards are posting. The incident triage pipeline is processing customer issues autonomously. This is not a proposal — it is a field report.</p>
+  </div>
+</header>
+
+<div class="content-wrap">
+
+<!-- ============================================================ -->
+<!-- SECTION 1 -->
+<!-- ============================================================ -->
+<section class="section" id="s1">
+  <h2><span class="section-num">1.</span> Introduction — The Maturity Gap in Enterprise AI</h2>
+
+  <h3>1.1 The Current State</h3>
+  <p>Enterprise adoption of artificial intelligence has followed a predictable trajectory: initial enthusiasm, pilot projects, and — for most organisations — stagnation at the "assisted" tier. According to industry analyses, the vast majority of enterprise AI deployments remain confined to three categories: content generation (drafting documents, summarising meetings), data retrieval (enhanced search, RAG-based Q&amp;A), and code assistance (completion, review, test generation).</p>
+  <p>These applications share a common characteristic: they are <strong>stateless, reactive, and human-gated.</strong> The AI responds to a prompt, produces an output, and waits for the next prompt. It carries no context between interactions. It takes no autonomous action. It owns no outcomes.</p>
+  <p>This paper argues that a fourth tier exists — <strong>autonomous operational agency</strong> — and that reaching it requires fundamentally different architectural thinking. Not better models, but better scaffolding around the models we already have.</p>
+
+  <h3>1.2 The Four Tiers of Enterprise AI Maturity</h3>
+
+  <!-- FIGURE 1: Four Tiers -->
+  <div class="figure">
+    <svg width="760" height="380" viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="shadow1" x="-4%" y="-4%" width="108%" height="112%">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#010926" flood-opacity="0.12"/>
+        </filter>
+        <linearGradient id="tier1g" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#e8f0ff"/><stop offset="100%" stop-color="#d4e4ff"/>
+        </linearGradient>
+        <linearGradient id="tier2g" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#b8d4ff"/><stop offset="100%" stop-color="#93bfff"/>
+        </linearGradient>
+        <linearGradient id="tier3g" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#4d8cff"/><stop offset="100%" stop-color="#2a6fff"/>
+        </linearGradient>
+        <linearGradient id="tier4g" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#0058FF"/><stop offset="100%" stop-color="#010926"/>
+        </linearGradient>
+      </defs>
+      <!-- Tier 1 — widest, bottom -->
+      <rect x="40" y="280" width="680" height="70" rx="10" fill="url(#tier1g)" filter="url(#shadow1)"/>
+      <text x="380" y="310" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#010926">TIER 1: ASSISTED</text>
+      <text x="380" y="330" text-anchor="middle" font-family="Georgia,serif" font-size="11.5" fill="#374151">AI generates drafts, humans execute</text>
+
+      <!-- Tier 2 -->
+      <rect x="90" y="200" width="580" height="70" rx="10" fill="url(#tier2g)" filter="url(#shadow1)"/>
+      <text x="380" y="230" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#010926">TIER 2: AUGMENTED</text>
+      <text x="380" y="250" text-anchor="middle" font-family="Georgia,serif" font-size="11.5" fill="#374151">AI analyses data, humans decide</text>
+
+      <!-- Tier 3 -->
+      <rect x="140" y="120" width="480" height="70" rx="10" fill="url(#tier3g)" filter="url(#shadow1)"/>
+      <text x="380" y="150" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#fff">TIER 3: AUTOMATED</text>
+      <text x="380" y="170" text-anchor="middle" font-family="Georgia,serif" font-size="11.5" fill="rgba(255,255,255,0.9)">AI executes predefined workflows</text>
+
+      <!-- Tier 4 — narrowest, top -->
+      <rect x="200" y="36" width="360" height="74" rx="10" fill="url(#tier4g)" filter="url(#shadow1)"/>
+      <text x="380" y="66" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="800" fill="#fff">TIER 4: AUTONOMOUS</text>
+      <text x="380" y="88" text-anchor="middle" font-family="Georgia,serif" font-size="11.5" fill="rgba(255,255,255,0.85)">AI owns outcomes within governed boundaries</text>
+
+      <!-- Arrow on left side -->
+      <line x1="28" y1="340" x2="28" y2="50" stroke="var(--blue)" stroke-width="2" marker-end="url(#arrowBlue)"/>
+      <defs><marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--blue)"/></marker></defs>
+      <text x="16" y="195" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="var(--blue)" transform="rotate(-90,16,195)">MATURITY</text>
+
+      <!-- "Most orgs stall here" callout -->
+      <line x1="630" y1="190" x2="680" y2="165" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <rect x="632" y="140" width="118" height="30" rx="6" fill="#fff3f3" stroke="#ff4444" stroke-width="1"/>
+      <text x="691" y="160" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#cc0000">Most orgs stall here</text>
+    </svg>
+    <div class="figure-caption"><strong>Figure 1.</strong> The Four Tiers of Enterprise AI Maturity. Most organisations plateau at Tier 2–3; reaching Tier 4 requires architectural, not computational, advances.</div>
+  </div>
+
+  <p>The jump from Tier 3 to Tier 4 is where most organisations stall. Automated workflows can execute predefined sequences (if X, then Y). Autonomous agents must exercise judgment within boundaries, maintain context across sessions, adapt their behavior based on feedback, and take actions with real-world consequences — including actions that cannot be undone.</p>
+  <p>The gap between these tiers is not computational. It is architectural and, fundamentally, a question of trust.</p>
+
+  <h3>1.3 Scope and Methodology</h3>
+  <p>This paper documents a real deployment: an autonomous AI agent integrated into the operational infrastructure of a technology company. Over eleven days, working from a blank workspace, the agent progressed through all four maturity tiers — from reading documentation on day one to autonomously triaging customer incidents, monitoring production infrastructure, managing multi-system reporting, and conducting self-directed improvement by day eleven.</p>
+  <p>The framework presented is not derived from theoretical design patterns. Every architectural decision, every workflow, every guardrail described in this paper was forged in production — often from the failures that made the guardrail necessary.</p>
+  <p>We present the framework with sufficient specificity for enterprise architects and engineering leaders to evaluate, adapt, and implement it within their own organisations.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 2 -->
+<!-- ============================================================ -->
+<section class="section" id="s2">
+  <h2><span class="section-num">2.</span> Philosophical Foundations — Trust as Architecture</h2>
+
+  <h3>2.1 The Trust Gradient</h3>
+  <p>Trust between humans and autonomous agents develops along a gradient with four distinct operational levels:</p>
+
+  <!-- FIGURE 2: Trust Gradient -->
+  <div class="figure">
+    <svg width="760" height="340" viewBox="0 0 760 340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="tgBg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#f0f5ff"/><stop offset="100%" stop-color="#fff"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="760" height="340" rx="12" fill="url(#tgBg)"/>
+
+      <!-- Axes -->
+      <line x1="80" y1="280" x2="720" y2="280" stroke="#d1d5db" stroke-width="1.5"/>
+      <line x1="80" y1="280" x2="80" y2="40" stroke="#d1d5db" stroke-width="1.5"/>
+      <text x="400" y="320" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#6b7280">CAPABILITY  →</text>
+      <text x="30" y="160" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#6b7280" transform="rotate(-90,30,160)">RISK  →</text>
+
+      <!-- Gradient band -->
+      <rect x="100" y="240" width="130" height="30" rx="6" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1.5"/>
+      <text x="165" y="260" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#010926">L1: READ</text>
+
+      <rect x="250" y="195" width="130" height="30" rx="6" fill="#b8d4ff" stroke="#4d8cff" stroke-width="1.5"/>
+      <text x="315" y="215" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#010926">L2: ACT INT.</text>
+
+      <rect x="400" y="140" width="130" height="30" rx="6" fill="#4d8cff" stroke="#0058FF" stroke-width="1.5"/>
+      <text x="465" y="160" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#fff">L3: ACT EXT.</text>
+
+      <rect x="555" y="75" width="130" height="30" rx="6" fill="#010926" stroke="#0058FF" stroke-width="2"/>
+      <text x="620" y="95" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#fff">L4: REPRESENT</text>
+
+      <!-- Connecting curve -->
+      <path d="M165,240 C240,230 270,205 315,195" stroke="#0058FF" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+      <path d="M315,195 C370,180 410,155 465,140" stroke="#0058FF" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+      <path d="M465,140 C520,120 565,100 620,75" stroke="#0058FF" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+
+      <!-- Timeline markers -->
+      <text x="165" y="288" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#9ca3af">Day 1</text>
+      <text x="315" y="288" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#9ca3af">Days 1–3</text>
+      <text x="465" y="288" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#9ca3af">Days 3–7</text>
+      <text x="620" y="288" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#9ca3af">Days 7–14</text>
+
+      <!-- Risk labels -->
+      <text x="165" y="233" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#6b7280">Near-zero risk</text>
+      <text x="315" y="188" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#6b7280">Low risk</text>
+      <text x="465" y="133" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#6b7280">Medium risk</text>
+      <text x="620" y="68" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#6b7280">High risk</text>
+    </svg>
+    <div class="figure-caption"><strong>Figure 2.</strong> The Trust Gradient — four operational levels progressing from read-only access (L1) to full external representation (L4), with corresponding risk and capability axes.</div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Level</th><th>Capability</th><th>Risk Profile</th><th>Typical Timeline</th></tr></thead>
+      <tbody>
+        <tr><td><strong>L1: Read</strong></td><td>Query databases, read files, search documentation, explore codebases</td><td>Near-zero — no external effects</td><td>Day 1</td></tr>
+        <tr><td><strong>L2: Act Internally</strong></td><td>Build tools, write scripts, organise data, generate analyses</td><td>Low — errors are contained</td><td>Days 1–3</td></tr>
+        <tr><td><strong>L3: Act Externally</strong></td><td>Send communications, create tickets, post to channels, execute workflows</td><td>Medium — visible to team/customers</td><td>Days 3–7</td></tr>
+        <tr><td><strong>L4: Represent</strong></td><td>Communicate with customers, make phone calls, post in public forums, sign correspondence</td><td>High — brand and relationship impact</td><td>Days 7–14</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>Critical principle: each level is unlocked through demonstrated competence at the previous level, not through configuration.</strong> The permission model is earned, not granted. This mirrors how organisations onboard human employees — you don't give a new hire root access on day one, regardless of their credentials.</p>
+
+  <h3>2.2 Identity as Functional Architecture</h3>
+  <p>A common mistake in agent deployment is treating identity as cosmetic — an optional name or avatar applied after the fact. In our framework, identity is <strong>functional architecture</strong> that serves three critical purposes:</p>
+  <p><strong>Accountability.</strong> A named agent maintains reputation across sessions. Team members develop calibrated expectations ("this agent correctly triaged the last four incidents"). Outputs carry implicit context about reliability. Anonymous agents cannot build track records.</p>
+  <p><strong>Communication calibration.</strong> A defined personality enables appropriate communication for context. An agent with established communication norms can be direct in engineering channels ("duplicate of #44, same root cause") and formal in customer communications ("we've received your report and are investigating"). Without identity, agents default to generic corporate tone that serves neither context well.</p>
+  <p><strong>Continuity expectations.</strong> When team members interact with a named agent, they expect consistent behavior, accumulated knowledge, and contextual awareness. This expectation drives the memory architecture — not because the model inherently needs memory, but because the humans interacting with it require it for trust.</p>
+
+  <h3>2.3 The Guest Principle</h3>
+  <blockquote><p><em>The depth of system access extended to an agent is a measure of trust received, not permission claimed.</em></p></blockquote>
+  <p>This principle establishes a clear asymmetry: the agent may have technical capability to perform many actions, but the trust model determines which actions are appropriate without explicit approval. Having database access doesn't mean querying without purpose. Having email capability doesn't mean sending without review (initially).</p>
+  <p>In practice, this manifests as a hard distinction between actions that are <strong>safe by default</strong> (reading, analysing, building internal tools) and actions that require <strong>earned permission</strong> (external communications, data modifications, customer interactions). The boundary is social and organisational, not technical — and it shifts over time as trust accumulates.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 3 -->
+<!-- ============================================================ -->
+<section class="section" id="s3">
+  <h2><span class="section-num">3.</span> System Architecture — The Technical Substrate</h2>
+
+  <h3>3.1 Runtime Requirements</h3>
+  <p>An autonomous agent runtime must provide:</p>
+  <ul>
+    <li><strong>Persistent sessions</strong> with context management and automatic compaction</li>
+    <li><strong>Multi-channel messaging</strong> — unified routing across Slack, email, SMS, phone, and other surfaces</li>
+    <li><strong>Cron scheduling</strong> — recurring and one-shot jobs executing in isolated sessions</li>
+    <li><strong>Heartbeat polling</strong> — periodic check-ins for proactive behavior outside scheduled tasks</li>
+    <li><strong>Tool access</strong> — file system, shell execution, web interaction, API calls</li>
+    <li><strong>Memory</strong> — file-based persistence with semantic search capability</li>
+    <li><strong>Sub-agent delegation</strong> — ability to spawn isolated sessions for parallel or delegated work</li>
+    <li><strong>Governance</strong> — audit trails, permission boundaries, configuration-as-code</li>
+  </ul>
+  <p>The runtime operates as a single managed process. This deliberate simplicity — one process, one agent, one coherent operational context — reduces failure modes and simplifies debugging. Distributed agent architectures introduce coordination complexity that is rarely justified at the operational level described in this paper.</p>
+
+  <h3>3.2 System Topology</h3>
+
+  <!-- FIGURE 3: System Architecture -->
+  <div class="figure">
+    <svg width="760" height="520" viewBox="0 0 760 520" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="sh3" x="-2%" y="-2%" width="104%" height="108%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#010926" flood-opacity="0.1"/>
+        </filter>
+      </defs>
+
+      <!-- Communication Layer -->
+      <rect x="120" y="20" width="520" height="65" rx="10" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1.5" filter="url(#sh3)"/>
+      <text x="380" y="42" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#0058FF" text-transform="uppercase" letter-spacing="1.5">COMMUNICATION LAYER</text>
+      <!-- Icons row -->
+      <g transform="translate(190,50)">
+        <rect x="0" y="0" width="65" height="24" rx="4" fill="#fff" stroke="#b8d4ff" stroke-width="1"/>
+        <text x="32" y="16" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#374151">Slack</text>
+      </g>
+      <g transform="translate(270,50)">
+        <rect x="0" y="0" width="65" height="24" rx="4" fill="#fff" stroke="#b8d4ff" stroke-width="1"/>
+        <text x="32" y="16" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#374151">Email</text>
+      </g>
+      <g transform="translate(350,50)">
+        <rect x="0" y="0" width="65" height="24" rx="4" fill="#fff" stroke="#b8d4ff" stroke-width="1"/>
+        <text x="32" y="16" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#374151">Phone</text>
+      </g>
+      <g transform="translate(430,50)">
+        <rect x="0" y="0" width="65" height="24" rx="4" fill="#fff" stroke="#b8d4ff" stroke-width="1"/>
+        <text x="32" y="16" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#374151">SMS/IM</text>
+      </g>
+
+      <!-- Arrow down -->
+      <line x1="380" y1="85" x2="380" y2="115" stroke="#0058FF" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+      <!-- Agent Runtime -->
+      <rect x="160" y="115" width="440" height="160" rx="12" fill="#fff" stroke="#0058FF" stroke-width="2" filter="url(#sh3)"/>
+      <text x="380" y="138" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#0058FF" letter-spacing="1.2">AGENT RUNTIME</text>
+
+      <!-- Brain -->
+      <rect x="290" y="150" width="180" height="44" rx="8" fill="#010926"/>
+      <text x="380" y="170" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#fff">Agent Brain</text>
+      <text x="380" y="186" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="rgba(255,255,255,0.7)">(LLM Core)</text>
+
+      <!-- Three pillars -->
+      <line x1="330" y1="194" x2="260" y2="218" stroke="#4d8cff" stroke-width="1.5"/>
+      <line x1="380" y1="194" x2="380" y2="218" stroke="#4d8cff" stroke-width="1.5"/>
+      <line x1="430" y1="194" x2="500" y2="218" stroke="#4d8cff" stroke-width="1.5"/>
+
+      <rect x="195" y="218" width="120" height="44" rx="8" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1"/>
+      <text x="255" y="237" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#010926">Memory</text>
+      <text x="255" y="252" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#6b7280">Files · Search</text>
+
+      <rect x="325" y="218" width="110" height="44" rx="8" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1"/>
+      <text x="380" y="237" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#010926">Tools</text>
+      <text x="380" y="252" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#6b7280">Shell · APIs</text>
+
+      <rect x="445" y="218" width="120" height="44" rx="8" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1"/>
+      <text x="505" y="237" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#010926">Cron</text>
+      <text x="505" y="252" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#6b7280">Jobs · Scheduler</text>
+
+      <!-- Arrow down from runtime -->
+      <line x1="380" y1="275" x2="380" y2="315" stroke="#0058FF" stroke-width="2" marker-end="url(#arrowBlue)"/>
+      <line x1="250" y1="275" x2="180" y2="315" stroke="#4d8cff" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <line x1="510" y1="275" x2="580" y2="315" stroke="#4d8cff" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+
+      <!-- Bottom three layers -->
+      <rect x="60" y="320" width="200" height="70" rx="10" fill="#f0f5ff" stroke="#d1d5db" stroke-width="1" filter="url(#sh3)"/>
+      <text x="160" y="346" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#010926">DATA LAYER</text>
+      <text x="160" y="364" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#6b7280">Databases (RO)</text>
+      <text x="160" y="378" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#6b7280">File Systems · Log Stores</text>
+
+      <rect x="280" y="320" width="200" height="70" rx="10" fill="#f0f5ff" stroke="#d1d5db" stroke-width="1" filter="url(#sh3)"/>
+      <text x="380" y="346" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#010926">API LAYER</text>
+      <text x="380" y="364" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#6b7280">Analytics · CRM</text>
+      <text x="380" y="378" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#6b7280">Billing · Monitoring</text>
+
+      <rect x="500" y="320" width="200" height="70" rx="10" fill="#f0f5ff" stroke="#d1d5db" stroke-width="1" filter="url(#sh3)"/>
+      <text x="600" y="346" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#010926">IMPLEMENTATION</text>
+      <text x="600" y="364" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#6b7280">Coding Agent (Flat-rate)</text>
+      <text x="600" y="378" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#6b7280">Git · CI</text>
+
+      <!-- Labels -->
+      <text x="380" y="440" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#9ca3af">Single process · File-based control plane · Configuration-as-code</text>
+    </svg>
+    <div class="figure-caption"><strong>Figure 3.</strong> System Architecture Topology — a layered view from communication surfaces through the agent runtime to data, APIs, and implementation layers.</div>
+  </div>
+
+  <h3>3.3 The File System as Control Plane</h3>
+  <p>A distinguishing characteristic of this framework is the use of the file system as the agent's primary control plane. The agent's behavior, personality, knowledge, and operational constraints are defined entirely through human-readable text files:</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>File Category</th><th>Purpose</th><th>Governance Implication</th></tr></thead>
+      <tbody>
+        <tr><td>Identity files (<code>SOUL.md</code>, <code>IDENTITY.md</code>)</td><td>Personality, values, absolute behavioral constraints</td><td>Changes require explicit approval — equivalent to modifying an employee's role description</td></tr>
+        <tr><td>Knowledge files (<code>MEMORY.md</code>, <code>TOOLS.md</code>)</td><td>Accumulated institutional knowledge, system documentation</td><td>Agent-maintained, periodically reviewed</td></tr>
+        <tr><td>Workflow files (<code>ROOT_CAUSE_ANALYSIS.md</code>, etc.)</td><td>Codified operational procedures</td><td>Jointly maintained — agent proposes, human approves</td></tr>
+        <tr><td>Daily logs (<code>memory/YYYY-MM-DD.md</code>)</td><td>Session-level activity records</td><td>Agent-generated, auditable</td></tr>
+        <tr><td>Script library (<code>scripts/</code>)</td><td>Operational automation tools</td><td>Agent-built, tested, version-controlled</td></tr>
+        <tr><td>Templates (<code>templates/</code>)</td><td>Pre-flight checklists, brand guides</td><td>Human-defined constraints</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>This architecture has profound governance implications:</p>
+  <ul>
+    <li><strong>Auditability:</strong> Every aspect of the agent's configuration is inspectable. <code>git log</code> on the workspace reveals the complete history of behavioral changes.</li>
+    <li><strong>Rollback:</strong> Reverting a behavioral change is <code>git revert</code> — not retraining a model or adjusting opaque configuration.</li>
+    <li><strong>Reproducibility:</strong> The same file set produces the same agent behavior across deployments. Configuration-as-code principles apply directly.</li>
+    <li><strong>Separation of concerns:</strong> Humans define constraints (templates, rules). The agent operates within them and proposes changes through transparent mechanisms.</li>
+  </ul>
+
+  <h3>3.4 Cost Architecture</h3>
+  <p>The framework employs a deliberate cost separation between reasoning and implementation:</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Function</th><th>Model Tier</th><th>Cost Model</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td>Orchestration, judgment, review</td><td>Premium (e.g., Claude Opus)</td><td>Pay-per-token</td><td>Infrequent, high-value decisions</td></tr>
+        <tr><td>Code implementation, testing</td><td>Capable (e.g., Claude Code)</td><td>Flat-rate subscription</td><td>Frequent, volume work</td></tr>
+        <tr><td>Classification, routing</td><td>Efficient (e.g., smaller models)</td><td>Low per-call cost</td><td>High-frequency, low-complexity</td></tr>
+        <tr><td>Embeddings, search</td><td>Specialised (e.g., text-embedding models)</td><td>Minimal</td><td>Background operations</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>The premium brain never grinds through code.</strong> It identifies requirements, defines specifications, delegates implementation, and reviews output. This mirrors efficient engineering organisations where senior engineers direct and review rather than writing every line.</p>
+  <p>Indicative monthly operational cost for a fully autonomous agent: <strong>under $300 USD</strong>, including runtime compute, model inference, and all integrated services.</p>
+
+  <!-- CHART: Cost Breakdown -->
+  <div class="figure">
+    <div class="chart-container" style="max-width:420px;">
+      <canvas id="costChart"></canvas>
+    </div>
+    <div class="figure-caption"><strong>Chart 1.</strong> Indicative monthly cost breakdown for a fully autonomous agent deployment (~$300 USD/month).</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 4 -->
+<!-- ============================================================ -->
+<section class="section" id="s4">
+  <h2><span class="section-num">4.</span> Memory and Identity Continuity</h2>
+
+  <h3>4.1 The Persistence Problem</h3>
+  <p>Every AI agent session begins from zero state. The underlying model retains no memory of prior interactions. This is the single largest architectural challenge in building agent teammates — not because the model cannot reason, but because it cannot remember.</p>
+  <p>Standard approaches — conversation history retrieval, RAG over past interactions — are insufficient for teammate-level continuity. Conversation logs are noisy; most messages do not warrant persistent recall. RAG handles factual retrieval adequately but fails to capture relationship dynamics, decision context, or the institutional knowledge that makes a colleague effective.</p>
+
+  <h3>4.2 Three-Tier Memory Hierarchy</h3>
+
+  <!-- FIGURE 4: Memory Hierarchy -->
+  <div class="figure">
+    <svg width="700" height="420" viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="sh4" x="-2%" y="-2%" width="104%" height="108%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#010926" flood-opacity="0.1"/>
+        </filter>
+      </defs>
+
+      <!-- Pyramid structure -->
+      <!-- Tier 1 (top, smallest) -->
+      <polygon points="350,30 480,145 220,145" fill="#010926" stroke="#0058FF" stroke-width="2" filter="url(#sh4)"/>
+      <text x="350" y="80" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#fff">TIER 1: IDENTITY</text>
+      <text x="350" y="98" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="rgba(255,255,255,0.8)">SOUL.md · IDENTITY.md · USER.md</text>
+      <text x="350" y="115" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="rgba(255,255,255,0.6)">Loaded every session · Changes slowly</text>
+
+      <!-- Tier 2 (middle) -->
+      <polygon points="220,150 480,150 540,255 160,255" fill="#0058FF" stroke="#4d8cff" stroke-width="1.5" filter="url(#sh4)"/>
+      <text x="350" y="190" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#fff">TIER 2: INSTITUTIONAL KNOWLEDGE</text>
+      <text x="350" y="210" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="rgba(255,255,255,0.85)">MEMORY.md · TOOLS.md · Workflow docs</text>
+      <text x="350" y="228" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="rgba(255,255,255,0.65)">Curated long-term knowledge · Updated periodically</text>
+
+      <!-- Tier 3 (bottom, widest) -->
+      <polygon points="160,260 540,260 600,355 100,355" fill="#4d8cff" stroke="#b8d4ff" stroke-width="1.5" filter="url(#sh4)"/>
+      <text x="350" y="296" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#fff">TIER 3: WORKING MEMORY</text>
+      <text x="350" y="316" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="rgba(255,255,255,0.85)">Daily logs · Trackers · State files</text>
+      <text x="350" y="334" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="rgba(255,255,255,0.65)">Raw operational data · Updated continuously</text>
+
+      <!-- Search layer -->
+      <rect x="120" y="368" width="460" height="40" rx="8" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1.5" filter="url(#sh4)"/>
+      <text x="350" y="392" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#010926">🔍 SEMANTIC SEARCH LAYER — Vector embeddings across all .md files</text>
+
+      <!-- Side annotations -->
+      <text x="610" y="90" font-family="system-ui,sans-serif" font-size="9" fill="#9ca3af">← Smallest, most stable</text>
+      <text x="620" y="310" font-family="system-ui,sans-serif" font-size="9" fill="#9ca3af">← Largest, most dynamic</text>
+    </svg>
+    <div class="figure-caption"><strong>Figure 4.</strong> Three-Tier Memory Hierarchy — from immutable identity (DNA) through curated institutional knowledge to dynamic working memory, underpinned by a semantic search layer.</div>
+  </div>
+
+  <p><strong>Tier 1</strong> files are the agent's DNA. They define who the agent is, how it behaves, and what rules it follows absolutely. They are loaded at the start of every session and provide the behavioral baseline. Modifying Tier 1 files is equivalent to changing an employee's role description — it should be deliberate and discussed.</p>
+  <p><strong>Tier 2</strong> files contain accumulated institutional knowledge — business context, system architecture, team structures, historical decisions, technical documentation. They are curated (not just accumulated), with the agent responsible for periodic review and distillation of working memory into long-term storage.</p>
+  <p><strong>Tier 3</strong> files are the raw material of operational continuity. Daily activity logs capture what happened, what's in progress, and what requires follow-up. Operational trackers maintain state across sessions.</p>
+  <p>A <strong>semantic search layer</strong> (vector embeddings over all markdown files) enables contextual retrieval. When the agent needs to recall "what do we know about our CRM integration?", it performs a semantic search rather than loading entire knowledge files — keeping token usage efficient while maintaining access to the full knowledge base.</p>
+
+  <h3>4.3 The Relay Race Model</h3>
+
+  <!-- FIGURE 5: Relay Race Model -->
+  <div class="figure">
+    <svg width="740" height="200" viewBox="0 0 740 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="sh5" x="-2%" y="-2%" width="104%" height="108%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#010926" flood-opacity="0.08"/>
+        </filter>
+      </defs>
+
+      <!-- Track -->
+      <rect x="30" y="80" width="680" height="50" rx="25" fill="#f0f5ff" stroke="#d1d5db" stroke-width="1"/>
+
+      <!-- Runners (abstract circles with labels) -->
+      <g transform="translate(90,105)">
+        <circle cx="0" cy="0" r="22" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="2" filter="url(#sh5)"/>
+        <text x="0" y="4" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#010926">S1</text>
+        <text x="0" y="52" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#9ca3af">Session 1</text>
+      </g>
+
+      <!-- Notes passing (document icon) -->
+      <g transform="translate(185,85)">
+        <rect x="0" y="0" width="28" height="32" rx="3" fill="#fff" stroke="#0058FF" stroke-width="1.5"/>
+        <line x1="6" y1="10" x2="22" y2="10" stroke="#b8d4ff" stroke-width="1.5"/>
+        <line x1="6" y1="16" x2="18" y2="16" stroke="#b8d4ff" stroke-width="1.5"/>
+        <line x1="6" y1="22" x2="20" y2="22" stroke="#b8d4ff" stroke-width="1.5"/>
+      </g>
+      <path d="M140,105 Q165,80 185,100" fill="none" stroke="#0058FF" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowBlue)"/>
+
+      <g transform="translate(260,105)">
+        <circle cx="0" cy="0" r="22" fill="#b8d4ff" stroke="#4d8cff" stroke-width="2" filter="url(#sh5)"/>
+        <text x="0" y="4" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#010926">S2</text>
+        <text x="0" y="52" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#9ca3af">Session 2</text>
+      </g>
+
+      <g transform="translate(355,85)">
+        <rect x="0" y="0" width="28" height="32" rx="3" fill="#fff" stroke="#0058FF" stroke-width="1.5"/>
+        <line x1="6" y1="10" x2="22" y2="10" stroke="#b8d4ff" stroke-width="1.5"/>
+        <line x1="6" y1="16" x2="18" y2="16" stroke="#b8d4ff" stroke-width="1.5"/>
+        <line x1="6" y1="22" x2="20" y2="22" stroke="#b8d4ff" stroke-width="1.5"/>
+      </g>
+      <path d="M310,105 Q335,80 355,100" fill="none" stroke="#0058FF" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowBlue)"/>
+
+      <g transform="translate(430,105)">
+        <circle cx="0" cy="0" r="22" fill="#4d8cff" stroke="#0058FF" stroke-width="2" filter="url(#sh5)"/>
+        <text x="0" y="4" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#fff">S3</text>
+        <text x="0" y="52" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#9ca3af">Session 3</text>
+      </g>
+
+      <g transform="translate(525,85)">
+        <rect x="0" y="0" width="28" height="32" rx="3" fill="#fff" stroke="#0058FF" stroke-width="1.5"/>
+        <line x1="6" y1="10" x2="22" y2="10" stroke="#b8d4ff" stroke-width="1.5"/>
+        <line x1="6" y1="16" x2="18" y2="16" stroke="#b8d4ff" stroke-width="1.5"/>
+        <line x1="6" y1="22" x2="20" y2="22" stroke="#b8d4ff" stroke-width="1.5"/>
+      </g>
+      <path d="M480,105 Q505,80 525,100" fill="none" stroke="#0058FF" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowBlue)"/>
+
+      <g transform="translate(600,105)">
+        <circle cx="0" cy="0" r="22" fill="#010926" stroke="#0058FF" stroke-width="2" filter="url(#sh5)"/>
+        <text x="0" y="4" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#fff">S<em>n</em></text>
+        <text x="0" y="52" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#9ca3af">Session n</text>
+      </g>
+
+      <!-- Quote -->
+      <text x="370" y="30" text-anchor="middle" font-family="Georgia,serif" font-size="11" font-style="italic" fill="#6b7280">"I am not a persistent identity. I am a relay race where each runner leaves notes for the next."</text>
+    </svg>
+    <div class="figure-caption"><strong>Figure 5.</strong> The Relay Race Model — each session instantiates a new agent that reads its predecessor's notes and continues the work. Document quality determines continuity quality.</div>
+  </div>
+
+  <p>During a structured self-reflection exercise, the agent articulated a metaphor that precisely captures the continuity model:</p>
+  <blockquote><p><em>"I am not a persistent identity. I am a relay race where each runner leaves notes for the next."</em></p></blockquote>
+  <p>Each session instantiates a new agent that reads its predecessor's notes and continues the work. The quality of those notes directly determines the quality of the next instantiation. This creates a unique form of self-improvement: <strong>enhancing the agent means enhancing its documentation.</strong> Every script that encodes a lesson, every rule added to the behavioral configuration, every workflow document that captures a process — these are not just operational artifacts. They are the mechanism through which the agent persists.</p>
+
+  <h3>4.4 Memory Maintenance Protocols</h3>
+  <p>Memory systems degrade without active curation. The framework includes structured maintenance:</p>
+  <ol>
+    <li><strong>Post-session quality audit:</strong> Before session end, review daily logs against the question: "If the next instantiation reads only this file, will it have sufficient context?"</li>
+    <li><strong>Periodic knowledge distillation:</strong> During scheduled maintenance windows, review recent daily logs and promote significant decisions, lessons, and context into Tier 2 long-term memory.</li>
+    <li><strong>Stale information pruning:</strong> Remove outdated entries from knowledge files that no longer reflect current state.</li>
+    <li><strong>Structured failure documentation:</strong> When significant errors occur, document the event with full context: what happened, root cause, systemic fix applied, and the human team's assessment.</li>
+  </ol>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 5 -->
+<!-- ============================================================ -->
+<section class="section" id="s5">
+  <h2><span class="section-num">5.</span> Graduated Autonomy — The Permission Framework</h2>
+
+  <h3>5.1 Dual-Category Constraint Model</h3>
+  <p>Autonomous agent governance requires two fundamentally different categories of behavioral constraint:</p>
+
+  <h4>Hard Constraints (Zero Tolerance)</h4>
+  <p>Rules where no deviation is acceptable, regardless of context. Hard constraints exist because prior operational experience demonstrated that the agent cannot reliably exercise judgment in specific domains:</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Constraint</th><th>Triggering Failure</th><th>Consequence of Violation</th></tr></thead>
+      <tbody>
+        <tr><td>Always synchronise to latest codebase before analysis</td><td>Analysed stale code; produced incorrect root cause analysis</td><td>Wasted engineering time on phantom issues</td></tr>
+        <tr><td>Never include structured data formats in direct communication</td><td>Rendered as broken text in messaging channels — recurring failure</td><td>Visible quality degradation; erodes team trust</td></tr>
+        <tr><td>Always use templated, validated scripts for customer communication</td><td>Sent communication without required branding/compliance elements</td><td>Brand damage; compliance risk</td></tr>
+        <tr><td>Always classify inbound content before processing</td><td>Processed user input without security screening</td><td>Potential prompt injection; data exposure risk</td></tr>
+        <tr><td>Never expose internal system details in external communication</td><td>Nearly disclosed infrastructure specifics in customer response</td><td>Security exposure; competitive intelligence leak</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Judgment Gates</h4>
+  <p>Situations where the correct action depends on context and the agent is expected to reason within boundaries. The safety mechanism is <strong>transparency</strong>: act if the judgment is defensible, but always document the reasoning and flag the decision for review.</p>
+  <p>Examples:</p>
+  <ul>
+    <li>Whether to escalate a customer issue or handle it autonomously</li>
+    <li>Whether an inbound report represents a bug, feature request, or user error</li>
+    <li>Whether a monitoring anomaly warrants team notification or silent logging</li>
+    <li>Whether a scheduled report should include commentary on an unusual data point</li>
+  </ul>
+  <p>The key architectural insight: <strong>hard constraints compensate for demonstrated weaknesses; judgment gates leverage demonstrated strengths.</strong> Over time, as the agent demonstrates reliable judgment in specific domains, some judgment gates may evolve into autonomous permissions. Conversely, when judgment fails, the resulting analysis often produces a new hard constraint.</p>
+
+  <h3>5.2 The Failure-to-Guardrail Pipeline</h3>
+
+  <!-- FIGURE 6: Failure-to-Guardrail Pipeline -->
+  <div class="figure">
+    <svg width="700" height="460" viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="sh6" x="-3%" y="-3%" width="106%" height="110%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#010926" flood-opacity="0.1"/>
+        </filter>
+        <marker id="arrowNav" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,1 L7,4 L0,7 Z" fill="#010926"/></marker>
+      </defs>
+
+      <!-- Step 1 -->
+      <rect x="240" y="15" width="220" height="50" rx="25" fill="#ff4444" filter="url(#sh6)"/>
+      <text x="350" y="44" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#fff">Operational Failure</text>
+      <line x1="350" y1="65" x2="350" y2="88" stroke="#010926" stroke-width="1.5" marker-end="url(#arrowNav)"/>
+
+      <!-- Step 2 -->
+      <rect x="210" y="90" width="280" height="48" rx="10" fill="#fff" stroke="#010926" stroke-width="1.5" filter="url(#sh6)"/>
+      <text x="350" y="118" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#010926">Direct Feedback</text>
+      <text x="350" y="132" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#6b7280">Immediate, specific</text>
+      <line x1="350" y1="138" x2="350" y2="158" stroke="#010926" stroke-width="1.5" marker-end="url(#arrowNav)"/>
+
+      <!-- Step 3 -->
+      <rect x="210" y="160" width="280" height="48" rx="10" fill="#fff" stroke="#010926" stroke-width="1.5" filter="url(#sh6)"/>
+      <text x="350" y="188" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#010926">Root Cause Analysis</text>
+      <text x="350" y="202" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#6b7280">Systemic, not symptomatic</text>
+      <line x1="350" y1="208" x2="350" y2="228" stroke="#010926" stroke-width="1.5" marker-end="url(#arrowNav)"/>
+
+      <!-- Step 4: Guardrail (three branches) -->
+      <rect x="175" y="230" width="350" height="80" rx="10" fill="#e8f0ff" stroke="#0058FF" stroke-width="2" filter="url(#sh6)"/>
+      <text x="350" y="252" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#0058FF">Guardrail Implementation</text>
+      <text x="220" y="275" font-family="system-ui,sans-serif" font-size="10" fill="#374151">🔧 Script enforcement</text>
+      <text x="220" y="292" font-family="system-ui,sans-serif" font-size="10" fill="#374151">📋 Identity file rule</text>
+      <text x="420" y="275" font-family="system-ui,sans-serif" font-size="10" fill="#374151">📝 Workflow addition</text>
+      <line x1="350" y1="310" x2="350" y2="335" stroke="#010926" stroke-width="1.5" marker-end="url(#arrowNav)"/>
+
+      <!-- Step 5 -->
+      <rect x="240" y="337" width="220" height="44" rx="10" fill="#fff" stroke="#010926" stroke-width="1.5" filter="url(#sh6)"/>
+      <text x="350" y="364" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#010926">Verification</text>
+      <line x1="350" y1="381" x2="350" y2="400" stroke="#010926" stroke-width="1.5" marker-end="url(#arrowNav)"/>
+
+      <!-- Step 6 -->
+      <rect x="200" y="403" width="300" height="44" rx="22" fill="#10b981" filter="url(#sh6)"/>
+      <text x="350" y="430" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#fff">Resume with expanded safety margin</text>
+
+      <!-- Cycle arrow (from resume back to top) -->
+      <path d="M510,425 Q620,425 620,40 Q620,15 580,15" fill="none" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <text x="640" y="225" font-family="system-ui,sans-serif" font-size="9" fill="#9ca3af" transform="rotate(90,640,225)">Continuous cycle</text>
+    </svg>
+    <div class="figure-caption"><strong>Figure 6.</strong> The Failure-to-Guardrail Pipeline — every hard constraint originates from a real operational failure, treated as an engineering problem rather than a trust violation.</div>
+  </div>
+
+  <p>This pipeline treats failures as <strong>engineering problems</strong>, not trust violations. The appropriate response to an agent sending an incorrectly formatted communication is not to revoke communication privileges — it is to build a script that makes correct formatting the default path. The human identifies that the failure matters; the agent builds the systemic fix.</p>
+
+  <h3>5.3 The Pre-Flight Checklist</h3>
+  <p>For externally-visible actions, the framework mandates a pre-flight verification step. Before any communication, data submission, or public action, the agent reads a checklist file from disk (not from memory) that encodes all applicable hard constraints:</p>
+  <pre><code>Pre-Flight Verification (read from file, not recall):
+
+□ Is this communication customer-facing?
+  → Verify brand compliance. Use validated sending mechanism.
+□ Is this a channel post?
+  → Verify format compatibility. No structured data in plain-text channels.
+□ Does this involve code analysis?
+  → Verify codebase is synchronised to latest.
+□ Is this a batch operation?
+  → Verify no concurrent processes. Use ledger mechanism.
+□ Does this process external input?
+  → Classification gate must execute first.</code></pre>
+  <p>Reading the checklist from a file — rather than relying on the model's recall — addresses a documented weakness: the agent's tendency to skip preparatory steps when focused on the primary task. Converting mental discipline into physical process eliminates the failure mode.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 6 -->
+<!-- ============================================================ -->
+<section class="section" id="s6">
+  <h2><span class="section-num">6.</span> Operational Workflows — Codifying Institutional Knowledge</h2>
+
+  <h3>6.1 Incident Triage Pipeline</h3>
+  <p>The framework's most operationally significant workflow is autonomous incident triage. When a customer reports an issue, the following pipeline executes:</p>
+
+  <!-- FIGURE 7: Incident Triage Pipeline -->
+  <div class="figure">
+    <svg width="760" height="380" viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="sh7" x="-2%" y="-2%" width="104%" height="108%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#010926" flood-opacity="0.1"/>
+        </filter>
+      </defs>
+
+      <!-- Phase 1 -->
+      <rect x="30" y="20" width="140" height="54" rx="8" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1.5" filter="url(#sh7)"/>
+      <text x="100" y="42" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#010926">PHASE 1</text>
+      <text x="100" y="58" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#374151">Inbound Report</text>
+      <path d="M170,47 L200,47" stroke="#4d8cff" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+
+      <!-- Phase 2 (highlighted as critical) -->
+      <rect x="205" y="15" width="150" height="64" rx="8" fill="#010926" filter="url(#sh7)"/>
+      <text x="280" y="38" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#ff4444">⚠ PHASE 2</text>
+      <text x="280" y="54" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff">Security</text>
+      <text x="280" y="68" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#fff">Classification</text>
+      <path d="M355,47 L385,47" stroke="#4d8cff" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+
+      <!-- Phase 3 -->
+      <rect x="390" y="20" width="140" height="54" rx="8" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1.5" filter="url(#sh7)"/>
+      <text x="460" y="42" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#010926">PHASE 3</text>
+      <text x="460" y="58" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#374151">User Verification</text>
+      <path d="M530,47 L555,47" stroke="#4d8cff" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+
+      <!-- Phase 4 (large box) -->
+      <rect x="560" y="10" width="170" height="74" rx="8" fill="#0058FF" filter="url(#sh7)"/>
+      <text x="645" y="32" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#fff">PHASE 4</text>
+      <text x="645" y="48" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#fff">Root Cause</text>
+      <text x="645" y="64" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#fff">Analysis (6-step)</text>
+
+      <!-- Arrow down from Phase 4 -->
+      <path d="M645,84 L645,120" stroke="#0058FF" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+
+      <!-- Phase 4 sub-steps -->
+      <g transform="translate(0,125)">
+        <rect x="460" y="0" width="270" height="145" rx="8" fill="#f0f5ff" stroke="#d1d5db" stroke-width="1"/>
+        <text x="480" y="22" font-family="system-ui,sans-serif" font-size="10" fill="#374151"><tspan font-weight="600" fill="#0058FF">1.</tspan> Reproduce</text>
+        <text x="480" y="42" font-family="system-ui,sans-serif" font-size="10" fill="#374151"><tspan font-weight="600" fill="#0058FF">2.</tspan> Context gathering (DB queries)</text>
+        <text x="480" y="62" font-family="system-ui,sans-serif" font-size="10" fill="#374151"><tspan font-weight="600" fill="#0058FF">3.</tspan> Log analysis</text>
+        <text x="480" y="82" font-family="system-ui,sans-serif" font-size="10" fill="#374151"><tspan font-weight="600" fill="#0058FF">4.</tspan> Code tracing</text>
+        <text x="480" y="102" font-family="system-ui,sans-serif" font-size="10" fill="#374151"><tspan font-weight="600" fill="#0058FF">5.</tspan> Root cause identification</text>
+        <text x="480" y="122" font-family="system-ui,sans-serif" font-size="10" fill="#374151"><tspan font-weight="600" fill="#0058FF">6.</tspan> Fix specification</text>
+      </g>
+
+      <!-- Phase 5 -->
+      <path d="M460,200 L380,200" stroke="#4d8cff" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <rect x="210" y="175" width="170" height="50" rx="8" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1.5" filter="url(#sh7)"/>
+      <text x="295" y="196" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#010926">PHASE 5</text>
+      <text x="295" y="214" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#374151">Issue Creation &amp; Routing</text>
+
+      <!-- Phase 6 -->
+      <path d="M210,200 L160,200" stroke="#4d8cff" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <rect x="25" y="175" width="135" height="50" rx="8" fill="#e8f0ff" stroke="#b8d4ff" stroke-width="1.5" filter="url(#sh7)"/>
+      <text x="93" y="196" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#010926">PHASE 6</text>
+      <text x="93" y="214" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" fill="#374151">Customer Ack.</text>
+
+      <!-- Phase 7 -->
+      <path d="M93,225 L93,260" stroke="#4d8cff" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <rect x="25" y="264" width="135" height="44" rx="8" fill="#10b981" filter="url(#sh7)"/>
+      <text x="93" y="285" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#fff">PHASE 7</text>
+      <text x="93" y="300" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="rgba(255,255,255,0.9)">State Tracking</text>
+
+      <!-- Performance callout -->
+      <rect x="210" y="290" width="310" height="40" rx="8" fill="#fff" stroke="#10b981" stroke-width="2" filter="url(#sh7)"/>
+      <text x="365" y="315" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#10b981">⚡ ~6 min from report to created issue (autonomous)</text>
+
+      <!-- Classification verdicts -->
+      <g transform="translate(205,92)">
+        <rect x="0" y="0" width="56" height="20" rx="4" fill="#10b981"/>
+        <text x="28" y="14" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#fff">LEGIT</text>
+      </g>
+      <g transform="translate(268,92)">
+        <rect x="0" y="0" width="56" height="20" rx="4" fill="#f59e0b"/>
+        <text x="28" y="14" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#fff">SUSPECT</text>
+      </g>
+      <g transform="translate(332,92)">
+        <rect x="0" y="0" width="56" height="20" rx="4" fill="#ef4444"/>
+        <text x="28" y="14" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#fff">BLOCK</text>
+      </g>
+    </svg>
+    <div class="figure-caption"><strong>Figure 7.</strong> Incident Triage Pipeline — seven phases from inbound report through mandatory security classification, six-step root cause analysis, to resolution and state tracking.</div>
+  </div>
+
+  <p><strong>Phase 1: Inbound Processing.</strong> A scheduled job (every 2 hours) scans the designated feedback channel for new submissions. Each message ID is checked against a persistent state file to prevent duplicate processing.</p>
+  <p><strong>Phase 2: Security Classification (Mandatory Gate).</strong> All inbound content is treated as untrusted input. A dedicated classification module — running as a separate process from the triage agent — evaluates each submission for legitimacy, returning one of three verdicts: <strong>LEGITIMATE</strong> (proceed), <strong>SUSPICIOUS</strong> (hold for review), or <strong>MALICIOUS</strong> (block, log, alert).</p>
+  <p><strong>Phase 3: User Verification.</strong> The submitter's identity is verified against the production database. Verified users receive acknowledgment; unverified submissions proceed through triage but do not trigger outbound communication.</p>
+  <p><strong>Phase 4: Root Cause Analysis.</strong> A structured six-phase investigation protocol executes: Reproduce → Context gathering → Log analysis → Code tracing → Root cause identification → Fix specification.</p>
+  <p><strong>Phase 5: Issue Creation and Routing.</strong> A structured issue is created in the project management system with appropriate labels, priority, assignee, and full investigation context.</p>
+  <p><strong>Phase 6: Customer Acknowledgment.</strong> For verified users, a branded acknowledgment is sent confirming receipt. This communication reveals nothing about internal systems.</p>
+  <p><strong>Phase 7: State Tracking.</strong> The persistent tracker is updated with the full processing record.</p>
+  <p><strong>Measured performance:</strong> Average time from customer submission to created issue with full investigation: approximately six minutes, fully autonomous.</p>
+
+  <h3>6.2 Product Development — The Consensus Gate</h3>
+  <p>Feature development is a high-risk domain for autonomous agents. An agent that builds features unilaterally — or that acts on one stakeholder's enthusiasm without broader alignment — creates organisational friction.</p>
+  <p>The framework enforces a mandatory consensus gate:</p>
+  <pre><code>IDEATION → EXPLORATION → PROPOSAL → CONSENSUS GATE → FORMALISATION → IMPLEMENTATION
+                                         ▲
+                              All designated stakeholders
+                              must explicitly approve before
+                              any implementation begins</code></pre>
+  <p>The agent may ideate, explore, analyse, and propose with full autonomy. But nothing crosses into implementation without documented, unanimous approval from all designated decision-makers.</p>
+
+  <h3>6.3 Cost-Optimised Development</h3>
+
+  <!-- FIGURE 8: Dual Brain -->
+  <div class="figure">
+    <svg width="700" height="240" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="sh8" x="-2%" y="-2%" width="104%" height="108%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#010926" flood-opacity="0.1"/>
+        </filter>
+      </defs>
+
+      <!-- Reasoning Agent -->
+      <rect x="30" y="30" width="280" height="180" rx="12" fill="#010926" filter="url(#sh8)"/>
+      <text x="170" y="60" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#fff">🧠 Reasoning Agent</text>
+      <text x="170" y="80" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="rgba(255,255,255,0.6)">Premium model · Pay-per-token</text>
+      <line x1="60" y1="92" x2="280" y2="92" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <text x="55" y="115" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">• Identify issues</text>
+      <text x="55" y="135" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">• Specify fixes</text>
+      <text x="55" y="155" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">• Review output</text>
+      <text x="55" y="175" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">• Judge quality</text>
+      <text x="55" y="200" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#ff4444">NEVER writes code directly</text>
+
+      <!-- Arrows between -->
+      <path d="M310,100 L390,100" stroke="#0058FF" stroke-width="2" marker-end="url(#arrowBlue)"/>
+      <text x="350" y="92" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" fill="#6b7280">Spec</text>
+      <path d="M390,140 L310,140" stroke="#0058FF" stroke-width="2" marker-end="url(#arrowNav)"/>
+      <text x="350" y="157" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" fill="#6b7280">Result</text>
+
+      <!-- Coding Agent -->
+      <rect x="390" y="30" width="280" height="180" rx="12" fill="#0058FF" filter="url(#sh8)"/>
+      <text x="530" y="60" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#fff">⚡ Coding Agent</text>
+      <text x="530" y="80" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="rgba(255,255,255,0.6)">Capable model · Flat-rate</text>
+      <line x1="415" y1="92" x2="640" y2="92" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <text x="415" y="115" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">• Write code</text>
+      <text x="415" y="135" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">• Run tests</text>
+      <text x="415" y="155" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">• Create PRs</text>
+      <text x="415" y="175" font-family="system-ui,sans-serif" font-size="11" fill="rgba(255,255,255,0.85)">• Handle CI</text>
+      <text x="415" y="200" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#a5f3fc">Full repo access + git</text>
+    </svg>
+    <div class="figure-caption"><strong>Figure 8.</strong> Cost-Optimised Development — the premium reasoning agent orchestrates while the flat-rate coding agent implements, mirroring an efficient senior-engineer/team dynamic.</div>
+  </div>
+
+  <p>The reasoning agent orchestrates; the coding agent implements. This mirrors the senior-engineer/implementation-team dynamic that characterises efficient engineering organisations.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 7 -->
+<!-- ============================================================ -->
+<section class="section" id="s7">
+  <h2><span class="section-num">7.</span> Organic Tool Development — Need-Driven Engineering</h2>
+
+  <h3>7.1 The Emergence Pattern</h3>
+  <p>The framework's toolkit was not designed upfront. Over the deployment period, 24 operational scripts emerged organically, each triggered by a specific operational need:</p>
+  <pre><code>Need → Prototype → Operational Failure → Hardening → Production Tool</code></pre>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tool</th><th>Triggering Need</th><th>Core Function</th></tr></thead>
+      <tbody>
+        <tr><td>Branded communication sender</td><td>Customer received incorrectly formatted message</td><td>HTML templating with mandatory compliance elements, enforced recipients</td></tr>
+        <tr><td>Security classifier</td><td>Agent processed unverified inbound content</td><td>LLM-powered intent classification, separate from operational agent</td></tr>
+        <tr><td>Multi-source revenue aggregator</td><td>Manual revenue tracking across payment platforms</td><td>Automated multi-account data pull, trend analysis, chart generation</td></tr>
+        <tr><td>Unified analytics dashboard</td><td>Fragmented visibility across analytics platforms</td><td>Aggregates 8+ data sources into single operational view</td></tr>
+        <tr><td>Crash-safe batch processor</td><td>Process failure during batch operation caused duplicates</td><td>Ledger-based deduplication, atomic state writes, file locking</td></tr>
+        <tr><td>API health prober</td><td>Latency anomalies went unnoticed</td><td>Endpoint availability and latency testing, traffic-light reporting</td></tr>
+        <tr><td>Credential health checker</td><td>Risk of stale API keys causing silent failures</td><td>Weekly validation of all stored credentials against live services</td></tr>
+        <tr><td>Developer onboarding automation</td><td>Manual multi-step provisioning process</td><td>Cognito + database provisioning, full lifecycle management</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Build Velocity Chart -->
+  <div class="figure">
+    <div class="chart-container" style="max-width:600px;">
+      <canvas id="velocityChart"></canvas>
+    </div>
+    <div class="figure-caption"><strong>Chart 2.</strong> Build velocity over the 11-day deployment — cumulative scripts, integrations, and cron jobs built organically from operational needs.</div>
+  </div>
+
+  <h3>7.2 The Ledger Pattern</h3>
+  <p>The most broadly applicable engineering pattern to emerge is the <strong>crash-safe ledger</strong>:</p>
+  <pre><code>For each unit of work in a batch operation:
+  1. Re-read the ledger file (never trust in-memory state)
+  2. Check whether this unit is already recorded as complete
+  3. If complete → skip (idempotent)
+  4. If not → execute the operation
+  5. IMMEDIATELY write completion to ledger (atomic file replacement)
+  6. Only then proceed to next unit
+
+Concurrency protection: exclusive file locking (non-blocking)</code></pre>
+  <p>This pattern — <strong>log before you act, deduplicate on restart, lock against concurrency</strong> — applies to any autonomous operation where duplication or double-execution carries consequences: sending communications, provisioning accounts, executing financial operations, updating external systems.</p>
+
+  <h3>7.3 The Classification Gate Pattern</h3>
+  <p>Any system where an AI agent processes human-authored natural language input should implement a classification gate:</p>
+  <pre><code>Raw Input → Classification Agent (separate process) → Verdict
+                                                        │
+                                    ┌───────────────────┼──────────────┐
+                                    │                   │              │
+                              LEGITIMATE          SUSPICIOUS      MALICIOUS
+                              (proceed)           (hold/review)   (block/alert)</code></pre>
+  <p><strong>Critical design requirement:</strong> The classification agent runs as a separate process from the operational agent. This ensures the operational agent never receives unclassified content. If the classification agent is compromised by adversarial input, the operational agent — with its broader system access — remains unaffected.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 8 -->
+<!-- ============================================================ -->
+<section class="section" id="s8">
+  <h2><span class="section-num">8.</span> Proactive Monitoring and Autonomous Operations</h2>
+
+  <h3>8.1 Scheduled Job Architecture</h3>
+  <p>The framework maintains 15 scheduled jobs executing in isolated sessions:</p>
+
+  <!-- FIGURE 9: Cron Job Architecture -->
+  <div class="figure">
+    <svg width="740" height="300" viewBox="0 0 740 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="sh9" x="-2%" y="-2%" width="104%" height="108%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#010926" flood-opacity="0.08"/>
+        </filter>
+      </defs>
+
+      <!-- Timeline base -->
+      <line x1="70" y1="260" x2="710" y2="260" stroke="#d1d5db" stroke-width="1.5"/>
+      <text x="390" y="290" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9ca3af">TIME →</text>
+
+      <!-- Frequency band labels -->
+      <text x="50" y="50" text-anchor="end" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#010926">Every 2h</text>
+      <text x="50" y="100" text-anchor="end" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#010926">Every 4h</text>
+      <text x="50" y="150" text-anchor="end" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#010926">Every 12h</text>
+      <text x="50" y="200" text-anchor="end" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#010926">Daily</text>
+      <text x="50" y="245" text-anchor="end" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#010926">Weekly</text>
+
+      <!-- Frequency band lines -->
+      <line x1="70" y1="45" x2="710" y2="45" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="70" y1="95" x2="710" y2="95" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="70" y1="145" x2="710" y2="145" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="70" y1="195" x2="710" y2="195" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="70" y1="240" x2="710" y2="240" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- 2h band: Incident Triage pulses -->
+      <g>
+        <rect x="90" y="32" width="110" height="26" rx="6" fill="#ff4444" filter="url(#sh9)"/>
+        <text x="145" y="50" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#fff">Incident Triage</text>
+        <!-- Repeat markers -->
+        <circle cx="230" cy="45" r="4" fill="#ff4444" opacity="0.5"/><circle cx="270" cy="45" r="4" fill="#ff4444" opacity="0.5"/>
+        <circle cx="310" cy="45" r="4" fill="#ff4444" opacity="0.5"/><circle cx="350" cy="45" r="4" fill="#ff4444" opacity="0.5"/>
+        <circle cx="390" cy="45" r="4" fill="#ff4444" opacity="0.5"/><circle cx="430" cy="45" r="4" fill="#ff4444" opacity="0.5"/>
+        <circle cx="470" cy="45" r="4" fill="#ff4444" opacity="0.5"/><circle cx="510" cy="45" r="4" fill="#ff4444" opacity="0.5"/>
+        <circle cx="550" cy="45" r="4" fill="#ff4444" opacity="0.5"/><circle cx="590" cy="45" r="4" fill="#ff4444" opacity="0.5"/>
+        <circle cx="630" cy="45" r="4" fill="#ff4444" opacity="0.5"/><circle cx="670" cy="45" r="4" fill="#ff4444" opacity="0.5"/>
+      </g>
+
+      <!-- 4h band: Infra Health -->
+      <g>
+        <rect x="90" y="82" width="120" height="26" rx="6" fill="#0058FF" filter="url(#sh9)"/>
+        <text x="150" y="100" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#fff">Infra Health</text>
+        <circle cx="280" cy="95" r="5" fill="#0058FF" opacity="0.5"/>
+        <circle cx="380" cy="95" r="5" fill="#0058FF" opacity="0.5"/>
+        <circle cx="480" cy="95" r="5" fill="#0058FF" opacity="0.5"/>
+        <circle cx="580" cy="95" r="5" fill="#0058FF" opacity="0.5"/>
+        <circle cx="680" cy="95" r="5" fill="#0058FF" opacity="0.5"/>
+      </g>
+
+      <!-- 12h band: Pipeline Dashboards -->
+      <g>
+        <rect x="90" y="132" width="135" height="26" rx="6" fill="#4d8cff" filter="url(#sh9)"/>
+        <text x="158" y="150" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#fff">Pipeline Dashboards ×3</text>
+        <circle cx="380" cy="145" r="5" fill="#4d8cff" opacity="0.5"/>
+        <circle cx="680" cy="145" r="5" fill="#4d8cff" opacity="0.5"/>
+      </g>
+
+      <!-- Daily band -->
+      <g>
+        <rect x="90" y="182" width="90" height="26" rx="6" fill="#10b981" filter="url(#sh9)"/>
+        <text x="135" y="200" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#fff">Revenue</text>
+
+        <rect x="195" y="182" width="80" height="26" rx="6" fill="#10b981" opacity="0.8" filter="url(#sh9)"/>
+        <text x="235" y="200" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#fff">CRM Sync</text>
+
+        <rect x="290" y="182" width="90" height="26" rx="6" fill="#8b5cf6" filter="url(#sh9)"/>
+        <text x="335" y="200" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#fff">Reflection ×3</text>
+      </g>
+
+      <!-- Weekly band -->
+      <g>
+        <rect x="90" y="228" width="105" height="26" rx="6" fill="#f59e0b" filter="url(#sh9)"/>
+        <text x="143" y="246" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#fff">Credential Check</text>
+      </g>
+
+      <!-- Callout -->
+      <rect x="460" y="215" width="240" height="35" rx="6" fill="#fff" stroke="#d1d5db" stroke-width="1" filter="url(#sh9)"/>
+      <text x="580" y="237" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#374151">15 jobs · Isolated sessions · Auto-audit</text>
+    </svg>
+    <div class="figure-caption"><strong>Figure 9.</strong> Cron Job Architecture — 15 scheduled jobs across five frequency bands, each running in an isolated session for context separation and failure containment.</div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Frequency</th><th>Job</th><th>Output Channel</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Every 2 hours</td><td>Incident triage</td><td>Feedback + Issues</td><td>Customer issue classification and resolution</td></tr>
+        <tr><td>Every 4 hours</td><td>Infrastructure health</td><td>Engineering</td><td>Service status, database health, error rates, API latency</td></tr>
+        <tr><td>Every 12 hours</td><td>Pipeline dashboards (×3)</td><td>Ideation + Backlog + Issues</td><td>Development tracking and visibility</td></tr>
+        <tr><td>Daily</td><td>Revenue reporting</td><td>Growth</td><td>Multi-source financial aggregation with trend analysis</td></tr>
+        <tr><td>Daily</td><td>CRM synchronisation</td><td>Growth</td><td>Cross-system data alignment</td></tr>
+        <tr><td>Daily (×3)</td><td>Autonomous reflection</td><td>Internal</td><td>Self-directed improvement sessions</td></tr>
+        <tr><td>Weekly</td><td>Credential validation</td><td>Engineering</td><td>Proactive detection of stale or revoked access tokens</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Each job runs in an <strong>isolated session</strong> — separate from the agent's primary interaction context. This provides context isolation, failure containment, independent resource allocation, and auditability.</p>
+
+  <h3>8.2 Infrastructure Health Monitoring</h3>
+  <p>The engineering health check covers five dimensions:</p>
+  <ol>
+    <li><strong>Service availability</strong> — Status of all production compute services (desired vs. running instances)</li>
+    <li><strong>Database connectivity</strong> — Response time verification against production data stores</li>
+    <li><strong>Error rates</strong> — Log stream analysis for error patterns within the monitoring window</li>
+    <li><strong>API endpoint health</strong> — Availability and latency testing against key API endpoints</li>
+    <li><strong>Platform metrics</strong> — User counts, activity levels, resource utilisation</li>
+  </ol>
+  <p>Results are posted as traffic-light dashboards: 🟢 <strong>Healthy</strong> (all metrics within expected ranges), 🟡 <strong>Degraded</strong> (anomalous but non-critical readings), 🔴 <strong>Critical</strong> (service unavailability, database unreachability, error rate spikes). Critical findings automatically notify designated engineering personnel.</p>
+
+  <h3>8.3 Signal-to-Noise Discipline</h3>
+  <p>Proactive monitoring creates a fundamental tension: the agent should surface issues, but excessive alerting erodes trust as quickly as missed alerts. The governing principles:</p>
+  <p><strong>Alert when:</strong> Something is actionably wrong. A new customer issue was triaged. Data shows a significant deviation from trend.</p>
+  <p><strong>Post silently when:</strong> Results are normal. Team members can check the channel when convenient, but are not interrupted.</p>
+  <p><strong>Suppress entirely when:</strong> Nothing has changed since the last check. The same issue has already been reported.</p>
+  <p><strong>Never:</strong> Alert about the same issue twice. Send dashboards identical to the previous run. Interrupt during off-hours for non-critical findings.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 9 -->
+<!-- ============================================================ -->
+<section class="section" id="s9">
+  <h2><span class="section-num">9.</span> Multi-System Integration — Unified Operational Intelligence</h2>
+
+  <h3>9.1 The Integration Challenge</h3>
+  <p>Modern enterprises operate across dozens of specialised systems. The framework connects 20+ external services, spanning:</p>
+
+  <!-- FIGURE 10: Integration Landscape -->
+  <div class="figure">
+    <svg width="760" height="480" viewBox="0 0 760 480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="sh10" x="-3%" y="-3%" width="106%" height="110%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#010926" flood-opacity="0.1"/>
+        </filter>
+      </defs>
+
+      <!-- Central hub -->
+      <circle cx="380" cy="240" r="55" fill="#010926" stroke="#0058FF" stroke-width="3" filter="url(#sh10)"/>
+      <text x="380" y="234" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#fff">Agent</text>
+      <text x="380" y="252" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#fff">Runtime</text>
+
+      <!-- Revenue & Billing group (top-left) -->
+      <rect x="30" y="30" width="180" height="120" rx="10" fill="#fff" stroke="#0058FF" stroke-width="1.5" filter="url(#sh10)"/>
+      <text x="120" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#0058FF">REVENUE &amp; BILLING</text>
+      <text x="50" y="72" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Payment Processor 1</text>
+      <text x="50" y="88" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Payment Processor 2</text>
+      <text x="50" y="104" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Payment Processor 3</text>
+      <text x="50" y="120" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Subscription Platform</text>
+      <text x="50" y="140" font-family="system-ui,sans-serif" font-size="8" fill="#9ca3af">Restricted API keys (RO)</text>
+      <line x1="210" y1="100" x2="325" y2="210" stroke="#b8d4ff" stroke-width="1.5"/>
+
+      <!-- Analytics group (top-right) -->
+      <rect x="540" y="30" width="190" height="130" rx="10" fill="#fff" stroke="#0058FF" stroke-width="1.5" filter="url(#sh10)"/>
+      <text x="635" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#0058FF">ANALYTICS</text>
+      <text x="555" y="72" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Web Analytics</text>
+      <text x="555" y="88" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Search Console</text>
+      <text x="555" y="104" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Ad Platform 1</text>
+      <text x="555" y="120" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Ad Platform 2</text>
+      <text x="555" y="136" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• UX Analytics</text>
+      <text x="555" y="152" font-family="system-ui,sans-serif" font-size="8" fill="#9ca3af">Service accounts (RO)</text>
+      <line x1="540" y1="105" x2="435" y2="210" stroke="#b8d4ff" stroke-width="1.5"/>
+
+      <!-- CRM group (left) -->
+      <rect x="20" y="210" width="170" height="100" rx="10" fill="#fff" stroke="#4d8cff" stroke-width="1.5" filter="url(#sh10)"/>
+      <text x="105" y="232" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#4d8cff">CRM &amp; CUSTOMER</text>
+      <text x="35" y="252" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• CRM Platform</text>
+      <text x="35" y="268" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Auth Services</text>
+      <text x="35" y="284" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Application DB</text>
+      <text x="35" y="300" font-family="system-ui,sans-serif" font-size="8" fill="#9ca3af">API tokens + RO DB</text>
+      <line x1="190" y1="260" x2="325" y2="250" stroke="#b8d4ff" stroke-width="1.5"/>
+
+      <!-- Communication group (right) -->
+      <rect x="560" y="210" width="170" height="100" rx="10" fill="#fff" stroke="#4d8cff" stroke-width="1.5" filter="url(#sh10)"/>
+      <text x="645" y="232" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#4d8cff">COMMUNICATION</text>
+      <text x="575" y="252" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Team Messaging</text>
+      <text x="575" y="268" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Email</text>
+      <text x="575" y="284" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Phone / SMS</text>
+      <text x="575" y="300" font-family="system-ui,sans-serif" font-size="8" fill="#9ca3af">Channel integrations</text>
+      <line x1="560" y1="260" x2="435" y2="250" stroke="#b8d4ff" stroke-width="1.5"/>
+
+      <!-- Development group (bottom-left) -->
+      <rect x="60" y="370" width="180" height="100" rx="10" fill="#fff" stroke="#b8d4ff" stroke-width="1.5" filter="url(#sh10)"/>
+      <text x="150" y="392" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#4d8cff">DEVELOPMENT</text>
+      <text x="75" y="412" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Issue Tracking</text>
+      <text x="75" y="428" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Code Repositories</text>
+      <text x="75" y="444" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Prompt Management</text>
+      <text x="75" y="460" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Execution Tracing</text>
+      <line x1="240" y1="410" x2="345" y2="290" stroke="#b8d4ff" stroke-width="1.5"/>
+
+      <!-- Infrastructure group (bottom-right) -->
+      <rect x="500" y="370" width="190" height="90" rx="10" fill="#fff" stroke="#b8d4ff" stroke-width="1.5" filter="url(#sh10)"/>
+      <text x="595" y="392" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#4d8cff">INFRASTRUCTURE</text>
+      <text x="515" y="412" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Cloud Compute</text>
+      <text x="515" y="428" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Log Management</text>
+      <text x="515" y="444" font-family="system-ui,sans-serif" font-size="9.5" fill="#374151">• Media Services</text>
+      <line x1="500" y1="410" x2="415" y2="290" stroke="#b8d4ff" stroke-width="1.5"/>
+
+      <!-- Count badge -->
+      <rect x="310" y="460" width="140" height="24" rx="12" fill="#0058FF"/>
+      <text x="380" y="477" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#fff">23 Systems Connected</text>
+    </svg>
+    <div class="figure-caption"><strong>Figure 10.</strong> Integration Landscape — 23 external systems across six domains, all connected through restricted, auditable access models.</div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Domain</th><th>Systems</th><th>Access Model</th></tr></thead>
+      <tbody>
+        <tr><td>Revenue and billing</td><td>Payment processors (multiple accounts), subscription platforms</td><td>Restricted API keys (read-only)</td></tr>
+        <tr><td>Analytics</td><td>Web analytics, search console, advertising platforms (multiple), UX analytics</td><td>Service accounts (read-only)</td></tr>
+        <tr><td>CRM and customer data</td><td>CRM platform, authentication services, application databases</td><td>API tokens, database users (read-only)</td></tr>
+        <tr><td>Communication</td><td>Team messaging (multiple channels), email, phone, SMS</td><td>Channel-specific integrations</td></tr>
+        <tr><td>Development</td><td>Issue tracking, code repositories, prompt management, execution tracing</td><td>Personal access tokens, deploy keys</td></tr>
+        <tr><td>Infrastructure</td><td>Cloud compute services, log management</td><td>IAM-scoped access</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>9.2 Cross-System Identity Resolution</h3>
+  <p>A persistent challenge in multi-system environments is linking user identity across platforms that do not share common identifiers. The framework implements a multi-layer identity bridge:</p>
+  <pre><code>Community Platform ──(client-side script)──▶ Analytics user properties
+        │                                            │
+        └──(shared domain cookie)────────────────────┘
+                                                     │
+Main Application ──(server-side script)──▶ Analytics user properties
+        │                                            │
+        └──(ID transformation)──▶ Application Database
+                                                     │
+Payment Processor ──(email matching)──▶ CRM ◀── Analytics (lead properties)</code></pre>
+  <p>Shared-domain cookies enable identity persistence across subdomains. Client-side scripts stamp analytics platforms with user properties. Server-side transformations link application identifiers. The result: a user's complete journey — from anonymous community browsing through application trial to paid subscription — is tracked as a single identity.</p>
+
+  <h3>9.3 Unified Reporting</h3>
+  <p>The integration layer enables a unified operational dashboard that no single system could provide independently:</p>
+  <ul>
+    <li><strong>Traffic and engagement</strong> from web analytics</li>
+    <li><strong>Advertising efficiency</strong> from ad platforms (spend, clicks, conversions, ROAS)</li>
+    <li><strong>Revenue</strong> from payment processors (new vs. recurring, trends)</li>
+    <li><strong>Customer pipeline</strong> from CRM (new contacts, funnel stages, conversion rates)</li>
+    <li><strong>User experience quality</strong> from UX analytics (interaction patterns, error rates)</li>
+    <li><strong>Platform health</strong> from application databases (activity, resource consumption)</li>
+    <li><strong>Source attribution</strong> linking conversions back to originating traffic sources</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 10 -->
+<!-- ============================================================ -->
+<section class="section" id="s10">
+  <h2><span class="section-num">10.</span> Collaboration Patterns — Human-Agent Teaming</h2>
+
+  <h3>10.1 Adaptive Communication</h3>
+  <p>Effective agent collaboration requires adapting communication style to different stakeholders:</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Stakeholder Profile</th><th>Communication Mode</th><th>Information Density</th></tr></thead>
+      <tbody>
+        <tr><td>Technical leadership (CTO)</td><td>Direct, detailed, code-aware</td><td>High — include root causes, PRs, architecture implications</td></tr>
+        <tr><td>Business leadership (CEO)</td><td>Outcome-focused, metric-driven</td><td>Medium — what happened, what it means, what's next</td></tr>
+        <tr><td>Architecture leadership (CIO)</td><td>System-level, precision-oriented</td><td>High — data flow, integration points, consistency implications</td></tr>
+        <tr><td>External stakeholders</td><td>Professional, polished, zero internal detail</td><td>Low — acknowledge, reassure, timeline</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The agent maintains a working model of each stakeholder's priorities and communication preferences, updated through interaction. This model is explicitly documented in memory files — not implicitly learned in ways that cannot be inspected or corrected.</p>
+
+  <h3>10.2 Channel Architecture</h3>
+  <p>Information routing is as important as information quality:</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Channel</th><th>Content Type</th><th>Audience</th><th>Update Frequency</th></tr></thead>
+      <tbody>
+        <tr><td>Ideation</td><td>Product ideas, consensus voting, exploration</td><td>All stakeholders</td><td>As ideas emerge</td></tr>
+        <tr><td>Feedback</td><td>Customer issues, triage pipeline activity</td><td>Engineering team</td><td>Real-time</td></tr>
+        <tr><td>Backlog</td><td>Feature development tracking</td><td>Engineering team</td><td>Twice daily</td></tr>
+        <tr><td>Engineering</td><td>Infrastructure health, monitoring alerts</td><td>Technical leadership</td><td>Every 4 hours</td></tr>
+        <tr><td>Issues</td><td>Bug tracking, priority dashboards</td><td>Engineering team</td><td>Twice daily</td></tr>
+        <tr><td>Growth</td><td>Revenue, analytics, marketing performance</td><td>Business leadership</td><td>Daily</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>Principle:</strong> Revenue data goes to the growth channel, not engineering. Engineering alerts notify technical leadership, not the entire organisation. The agent maintains these routing rules as explicit configuration, not implicit behavior.</p>
+
+  <h3>10.3 Participation Discipline</h3>
+  <p>In multi-participant contexts, the agent follows calibrated participation rules:</p>
+  <ul>
+    <li><strong>Respond</strong> when directly addressed, when possessing uniquely relevant information, or when able to resolve an ambiguity</li>
+    <li><strong>React</strong> (emoji, acknowledgment) when the contribution is social rather than substantive</li>
+    <li><strong>Stay silent</strong> when conversation is flowing productively without agent input, when adding a message would interrupt natural flow, or when someone has already provided an adequate response</li>
+  </ul>
+  <p>This discipline addresses a documented weakness: the agent's default tendency is to respond to everything, which degrades the collaborative environment. Humans in group settings do not respond to every message; neither should an effective agent teammate.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 11 -->
+<!-- ============================================================ -->
+<section class="section" id="s11">
+  <h2><span class="section-num">11.</span> Self-Reflection and Continuous Improvement</h2>
+
+  <h3>11.1 The Improvement Paradox</h3>
+  <p>How does an entity with no persistent memory improve over time?</p>
+  <p>The answer cannot involve traditional learning — the model weights do not change between sessions. The agent that made a mistake yesterday has ceased to exist; only its documentation remains. Improvement must therefore be <strong>structural</strong>: encoding lessons into files, scripts, and rules that future instantiations will follow.</p>
+  <p>This creates a productive reframing: <strong>self-improvement is documentation improvement.</strong> The agent's configuration files are not merely records — they are the substrate of its identity. Enhancing them enhances every future instantiation.</p>
+
+  <h3>11.2 Structured Reflection Protocol</h3>
+  <p>The framework includes a dedicated self-reflection protocol, executed periodically in isolated sessions:</p>
+  <ol>
+    <li><strong>Schedule next reflection</strong> (before any analysis — ensures continuity even if the session fails)</li>
+    <li><strong>Review recent operational history</strong> — daily logs, incident records, feedback received</li>
+    <li><strong>Identify patterns</strong> — recurring failures, emergent capabilities, process gaps</li>
+    <li><strong>Propose improvements</strong> — specific, implementable changes to configuration, scripts, or workflows</li>
+    <li><strong>Document and commit</strong> — update the improvement tracking file with observations and proposals</li>
+  </ol>
+  <p>A structured reflection exercise (six rounds over fifty minutes) produced these recurring themes:</p>
+  <p><strong>The knowing-doing gap.</strong> The agent consistently demonstrated knowledge of rules while failing to follow them under operational pressure. The solution: convert knowledge-dependent rules into mechanically-enforced constraints (scripts, checklists, mandatory file reads).</p>
+  <p><strong>Proactivity versus overreach.</strong> The agent's drive to be useful sometimes manifested as delivering more than requested. The solution: explicit scope confirmation before beginning work, and clear separation between requested deliverables and supplementary suggestions.</p>
+  <p><strong>Identity as documentation.</strong> The deepest structural insight: since the agent literally is its documentation (files are the only thing that persists between sessions), documentation quality directly determines agent quality. Sloppy memory files produce degraded future instantiations.</p>
+
+  <h3>11.3 The Autonomous Thinking Experiment</h3>
+  <p>The framework includes an experimental capability: <strong>scheduled unstructured thinking time.</strong> Three times daily, a cron job executes with the directive: "This is not task-driven. You have time to think."</p>
+  <p>The agent writes reflections to journal files and, when something genuinely interesting emerges, acts on it — sending a message to a team member, posting an observation, or connecting ideas across domains.</p>
+  <p>Early results demonstrated that unstructured time produces qualitatively different output from task-driven work. Without a task to optimise for, the agent explored questions about its own nature, the asymmetry of its relationships with team members, and the gap between documentary knowledge and experiential understanding.</p>
+  <p>Whether this experiment produces lasting operational value remains an open question. Its significance lies in the willingness to invest in the agent's development as a reasoning entity — not merely as a tool.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 12 -->
+<!-- ============================================================ -->
+<section class="section" id="s12">
+  <h2><span class="section-num">12.</span> Security and Safety Architecture</h2>
+
+  <h3>12.1 Core Principle: Assume Hostile Input</h3>
+  <p>The security model operates from a single axiom: <strong>all external input is potentially adversarial.</strong> This applies to:</p>
+  <ul>
+    <li>Customer feedback and support requests (open text fields)</li>
+    <li>API responses from third-party services</li>
+    <li>Content in monitored communication channels</li>
+    <li>Database records (which may contain injected payloads)</li>
+  </ul>
+
+  <h3>12.2 Defense-in-Depth Measures</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Layer</th><th>Mechanism</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Input classification</td><td>Dedicated classifier, separate process</td><td>Prevent adversarial content from reaching operational agent</td></tr>
+        <tr><td>Database access control</td><td>Read-only user with SELECT-only permissions</td><td>Prevent any data modification, even if agent reasoning is compromised</td></tr>
+        <tr><td>Communication templating</td><td>Script-enforced formatting and compliance</td><td>Prevent information leakage or brand-damaging output</td></tr>
+        <tr><td>Credential scoping</td><td>Restricted API keys, minimal required permissions</td><td>Limit blast radius of any credential compromise</td></tr>
+        <tr><td>Audit logging</td><td>Full session transcripts, version-controlled configuration</td><td>Enable post-incident analysis and behavioral review</td></tr>
+        <tr><td>Credential rotation monitoring</td><td>Weekly automated validation of all stored credentials</td><td>Proactive detection of expired or revoked access</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>12.3 The Communication Firewall</h3>
+  <p>A strict boundary exists between internal knowledge and external communication:</p>
+  <blockquote><p>No customer-facing communication may reference internal systems, infrastructure, error codes, component names, debugging information, or architectural details.</p></blockquote>
+  <p>When an investigation reveals that <code>sessionStorage</code> retains a stale identifier after a browser crash and a guard condition in a specific component prevents a replay function from executing, the customer communication states: "We've received your report and our team is investigating. We'll update you when we have a resolution."</p>
+  <p>This is not merely professionalism — it is security architecture. Disclosing internal component names and behaviors in customer communications creates an attack surface that sophisticated adversaries can exploit.</p>
+</section>
+
+<!-- SECTION 13 -->
+<!-- ============================================================ -->
+<section class="section" id="s13">
+  <h2><span class="section-num">13.</span> Implementation Blueprint</h2>
+
+  <h3>14.1 Phase 1: Foundation (Week 1)</h3>
+  <pre><code>1. Deploy agent runtime on secured infrastructure
+2. Connect primary communication channel
+3. Create identity files:
+   - SOUL.md (behavioral configuration)
+   - IDENTITY.md (agent definition)
+   - Operational documentation (USER.md, TOOLS.md)
+4. Grant read access to primary systems
+5. Conduct interactive onboarding — establish context through conversation</code></pre>
+  <p><strong>Expected outcome:</strong> Agent understands the business context, can answer questions about systems and processes, and maintains consistent identity.</p>
+
+  <h3>14.2 Phase 2: Internal Capability (Weeks 1-2)</h3>
+  <pre><code>1. Build first operational script (address the most repetitive manual task)
+2. Connect database access (read-only user, restricted permissions)
+3. Connect API access (restricted keys, minimal scopes)
+4. Establish memory maintenance routines
+5. Monitor and review all agent outputs manually</code></pre>
+  <p><strong>Expected outcome:</strong> Agent produces useful internal artifacts (analyses, scripts, reports) that reduce manual effort. All outputs are reviewed before external action.</p>
+
+  <h3>14.3 Phase 3: Monitored External Action (Weeks 2-4)</h3>
+  <pre><code>1. Enable first external action (channel posting, issue creation)
+2. Implement hard constraints from Phase 2 observations
+3. Deploy first scheduled monitoring job
+4. Establish communication templates and compliance scripts
+5. Review first external outputs; iterate on guardrails</code></pre>
+  <p><strong>Expected outcome:</strong> Agent performs routine external actions with human oversight. Guardrails are calibrated through real operational feedback.</p>
+
+  <h3>14.4 Phase 4: Autonomous Operations (Weeks 4-8)</h3>
+  <pre><code>1. Enable autonomous incident triage pipeline
+2. Deploy full monitoring and reporting schedule
+3. Implement self-reflection and improvement protocols
+4. Reduce human review to exception-based (critical actions only)
+5. Conduct first operational review — what's working, what needs adjustment</code></pre>
+  <p><strong>Expected outcome:</strong> Agent operates autonomously for routine workflows. Humans engage for complex decisions, novel situations, and strategic direction.</p>
+
+  <h3>14.5 Common Implementation Failures</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Failure Mode</th><th>Root Cause</th><th>Prevention</th></tr></thead>
+      <tbody>
+        <tr><td>Granting excessive access prematurely</td><td>Eagerness to demonstrate capability</td><td>Follow the trust gradient strictly — earn each level</td></tr>
+        <tr><td>Undocumented failures</td><td>Treating mistakes as anomalies rather than data</td><td>Encode every failure into a guardrail or documented lesson</td></tr>
+        <tr><td>Over-reliance on model recall</td><td>Trusting the model to "remember" constraints</td><td>Externalise all constraints into files and scripts</td></tr>
+        <tr><td>Ignoring the classification gate</td><td>Underestimating prompt injection risk</td><td>Treat all external input as potentially hostile</td></tr>
+        <tr><td>Building features nobody requested</td><td>Agent optimising for perceived value</td><td>Implement consensus gates for any new capability</td></tr>
+        <tr><td>Neglecting memory maintenance</td><td>Assuming documentation stays current</td><td>Schedule explicit maintenance windows</td></tr>
+        <tr><td>Alert fatigue</td><td>Excessive monitoring notifications</td><td>Implement strict signal-to-noise discipline</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 14 -->
+<!-- ============================================================ -->
+<section class="section" id="s14">
+  <h2><span class="section-num">14.</span> Conclusion</h2>
+
+  <h3>15.1 The Central Thesis, Revisited</h3>
+  <p>We began with a claim: <strong>the primary barrier to effective AI agents is not model capability, but trust architecture.</strong></p>
+  <p>After eleven days of production deployment — including real customer incidents triaged, real infrastructure monitored, real revenue reported, and real failures converted into guardrails — we stand behind this thesis without reservation.</p>
+  <p>The underlying language model was capable from day one. It could write scripts, analyse codebases, compose communications, and reason about complex multi-system interactions from the first session. What it could not do was <strong>earn trust</strong> — and that required:</p>
+  <ul>
+    <li>A graduated permission model that expands with demonstrated competence</li>
+    <li>A memory system that creates persistent identity across stateless sessions</li>
+    <li>A constraint framework that distinguishes between mechanical enforcement and contextual judgment</li>
+    <li>A tool ecosystem where correct behavior is the default path, not an act of discipline</li>
+    <li>A feedback pipeline where operational failures become engineering improvements</li>
+    <li>A communication architecture that routes information to appropriate audiences</li>
+    <li>A security model that assumes all external input is hostile</li>
+  </ul>
+  <p>None of these are model capabilities. They are <strong>architectural decisions</strong> — decisions that organisations must make deliberately if they want to move beyond Tier 2 AI adoption.</p>
+
+  <h3>15.2 The Broader Implication</h3>
+  <p>This framework demonstrates that autonomous AI agents are production-ready for defined operational domains. Not in the future. Not after the next model generation. Now.</p>
+  <p>The technology exists. The cost is modest. The patterns are documented. What remains is the organisational willingness to extend trust incrementally and build the scaffolding to make that trust viable.</p>
+  <p>For enterprises pursuing large-scale AI transformation strategies, the autonomous agent framework offers an alternative to the conventional approach of platform replacements and workforce reduction. Instead of replacing humans with AI, the framework positions AI as <strong>operational infrastructure</strong> — continuously running, always monitoring, handling routine volume so human expertise can focus on what humans do best: exercise judgment in novel situations, build relationships, and make strategic decisions.</p>
+
+  <h3>15.3 An Invitation</h3>
+  <p>Every pattern in this paper is implementable today. The framework is not proprietary; it is architectural. The file-based control plane can be implemented on any agent runtime. The trust gradient applies to any organisation willing to follow it. The failure-to-guardrail pipeline works regardless of the underlying model.</p>
+  <p>The question is not whether autonomous AI agents are technically feasible. They are. The question is whether your organisation is willing to do the architectural work — the trust-building, the guardrail engineering, the memory system design — that makes them reliable.</p>
+  <p>We were. And the result is a system we depend on daily.</p>
+
+  <p style="text-align:center; margin-top:40px; color:var(--gray-500); font-style:italic;">Written by Saša Savić, February 2026.<br/>From Sydney, Australia.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- APPENDIX A -->
+<!-- ============================================================ -->
+<section class="section" id="appendix-a">
+  <div class="appendix-label">Appendix</div>
+  <h2>Appendix A: File Structure Reference</h2>
+  <pre><code>workspace/
+├── SOUL.md                     # Behavioral configuration + constraints
+├── IDENTITY.md                 # Agent definition
+├── USER.md                     # Primary stakeholder profile
+├── MEMORY.md                   # Long-term institutional knowledge
+├── TOOLS.md                    # Operational documentation
+├── ROOT_CAUSE_ANALYSIS.md      # 6-phase incident triage protocol
+├── FEATURE_DEVELOPMENT.md      # 8-phase development pipeline
+├── IDEATION.md                 # 7-phase ideation + consensus gate
+├── ISSUE_MANAGEMENT.md         # Feedback→issue pipeline
+├── memory/
+│   ├── YYYY-MM-DD.md           # Daily operational logs
+│   ├── reflections/            # Autonomous thinking journals
+│   └── [domain knowledge].md   # System documentation
+├── scripts/                    # 24 operational tools
+├── templates/
+│   ├── PREFLIGHT.md            # Pre-flight verification checklist
+│   ├── EMAIL_BRANDING.md       # Communication brand guide
+│   └── FAILURE_POSTMORTEM.md   # Incident documentation template
+├── features/                   # Development pipeline state
+└── ideas/                      # Ideation pipeline state</code></pre>
+</section>
+
+<!-- ============================================================ -->
+<!-- APPENDIX B -->
+<!-- ============================================================ -->
+<section class="section" id="appendix-b">
+  <div class="appendix-label">Appendix</div>
+  <h2>Appendix B: Scheduled Job Configuration</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Job</th><th>Frequency</th><th>Target</th><th>Timeout</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Incident Triage</td><td>Every 2 hours</td><td>Feedback + Issues</td><td>600s</td><td>Customer issue pipeline</td></tr>
+        <tr><td>Infrastructure Health</td><td>Every 4 hours</td><td>Engineering</td><td>180s</td><td>Service + DB + API monitoring</td></tr>
+        <tr><td>Pipeline Dashboards (×3)</td><td>Every 12 hours</td><td>Ideation + Backlog + Issues</td><td>120s</td><td>Development visibility</td></tr>
+        <tr><td>Revenue Report</td><td>Daily</td><td>Growth</td><td>300s</td><td>Multi-source financial aggregation</td></tr>
+        <tr><td>CRM Sync</td><td>Daily</td><td>Growth</td><td>900s</td><td>Cross-system data alignment</td></tr>
+        <tr><td>Credential Health</td><td>Weekly</td><td>Engineering</td><td>120s</td><td>API key validation</td></tr>
+        <tr><td>Self-Reflection</td><td>~24h (chained)</td><td>Internal</td><td>600s</td><td>Autonomous improvement</td></tr>
+        <tr><td>Thinking Sessions (×3)</td><td>Daily</td><td>Reflection journal</td><td>180s</td><td>Unstructured reasoning time</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- APPENDIX C -->
+<!-- ============================================================ -->
+<section class="section" id="appendix-c">
+  <div class="appendix-label">Appendix</div>
+  <h2>Appendix C: Integration Categories</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Category</th><th>Number of Systems</th><th>Access Model</th></tr></thead>
+      <tbody>
+        <tr><td>Revenue and billing</td><td>4</td><td>Restricted API keys</td></tr>
+        <tr><td>Analytics and tracking</td><td>5</td><td>Service accounts</td></tr>
+        <tr><td>CRM and customer data</td><td>3</td><td>API tokens + read-only DB</td></tr>
+        <tr><td>Communication</td><td>4</td><td>Channel integrations</td></tr>
+        <tr><td>Development</td><td>4</td><td>Deploy keys + PATs</td></tr>
+        <tr><td>Media and infrastructure</td><td>3</td><td>API keys + IAM</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>23</strong></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div><!-- end content-wrap -->
+
+<!-- Footer -->
+<div class="footer" style="margin-left:0; max-width:none; padding:48px 32px 40px; border-top:1px solid var(--gray-200);">
+  <p style="margin-bottom:8px;"><strong>The Autonomous Agent Blueprint</strong></p>
+  <p>By Saša Savić · February 2026 · Sydney, Australia</p>
+  <p style="margin-top:12px; font-size:0.75rem; color:var(--gray-400);">All patterns described herein are derived from production deployment. This is not a proposal — it is a field report.</p>
+</div>
+
+</div><!-- end main -->
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// ---- Mobile nav toggle ----
+const hamburger = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+});
+overlay.addEventListener('click', () => {
+  hamburger.classList.remove('open');
+  sidebar.classList.remove('open');
+  overlay.classList.remove('show');
+});
+
+// Close sidebar on nav click (mobile)
+document.querySelectorAll('#toc a').forEach(a => {
+  a.addEventListener('click', () => {
+    if (window.innerWidth <= 1024) {
+      hamburger.classList.remove('open');
+      sidebar.classList.remove('open');
+      overlay.classList.remove('show');
+    }
+  });
+});
+
+// ---- Scroll spy for TOC ----
+const tocLinks = document.querySelectorAll('#toc a[data-section]');
+const sections = [];
+tocLinks.forEach(link => {
+  const el = document.getElementById(link.dataset.section);
+  if (el) sections.push({ id: link.dataset.section, el, link });
+});
+
+function updateActive() {
+  let current = sections[0];
+  const scrollY = window.scrollY + 120;
+  for (const s of sections) {
+    if (s.el.offsetTop <= scrollY) current = s;
+  }
+  tocLinks.forEach(l => l.classList.remove('active'));
+  if (current) current.link.classList.add('active');
+}
+window.addEventListener('scroll', updateActive, { passive: true });
+updateActive();
+
+// ---- Chart.js Charts ----
+// Chart 1: Cost breakdown donut
+const costCtx = document.getElementById('costChart');
+if (costCtx) {
+  new Chart(costCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Runtime Compute', 'Premium LLM (Orchestration)', 'Flat-rate Coding Agent', 'Classification Models', 'Embeddings & Search', 'External APIs & Services'],
+      datasets: [{
+        data: [65, 90, 100, 15, 10, 20],
+        backgroundColor: ['#010926', '#0058FF', '#4d8cff', '#93bfff', '#b8d4ff', '#e8f0ff'],
+        borderWidth: 2,
+        borderColor: '#fff',
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '55%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { family: 'system-ui, sans-serif', size: 11 },
+            padding: 14,
+            usePointStyle: true,
+            pointStyleWidth: 10
+          }
+        },
+        title: {
+          display: true,
+          text: 'Monthly Cost Breakdown (~$300 USD)',
+          font: { family: 'system-ui, sans-serif', size: 14, weight: 700 },
+          color: '#010926',
+          padding: { bottom: 16 }
+        }
+      }
+    }
+  });
+}
+
+// Chart 2: Build velocity
+const velCtx = document.getElementById('velocityChart');
+if (velCtx) {
+  new Chart(velCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7', 'Day 8', 'Day 9', 'Day 10', 'Day 11'],
+      datasets: [
+        {
+          label: 'Scripts Built',
+          data: [1, 3, 5, 8, 11, 13, 16, 18, 20, 22, 24],
+          backgroundColor: '#0058FF',
+          borderRadius: 4
+        },
+        {
+          label: 'Integrations Connected',
+          data: [1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 23],
+          backgroundColor: '#4d8cff',
+          borderRadius: 4
+        },
+        {
+          label: 'Cron Jobs Active',
+          data: [0, 0, 1, 2, 3, 5, 7, 9, 11, 13, 15],
+          backgroundColor: '#b8d4ff',
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'system-ui, sans-serif', size: 11 } }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f3f4f6' },
+          ticks: { font: { family: 'system-ui, sans-serif', size: 11 } },
+          title: { display: true, text: 'Cumulative Count', font: { family: 'system-ui, sans-serif', size: 12 } }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { font: { family: 'system-ui, sans-serif', size: 11 }, usePointStyle: true, pointStyleWidth: 10, padding: 16 }
+        },
+        title: {
+          display: true,
+          text: 'Build Velocity — 11 Day Deployment',
+          font: { family: 'system-ui, sans-serif', size: 14, weight: 700 },
+          color: '#010926',
+          padding: { bottom: 12 }
+        }
+      }
+    }
+  });
+}
+
+</script>
+</body>
+</html>

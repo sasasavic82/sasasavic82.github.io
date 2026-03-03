@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saša Savić — Papers</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #010926;
+      --blue: #0058FF;
+      --blue-light: #4d8cff;
+      --gray-100: #f3f4f6;
+      --gray-500: #6b7280;
+      --gray-800: #1f2937;
+      --white: #ffffff;
+    }
+    body {
+      font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 640px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: var(--gray-500);
+      font-size: 0.95rem;
+      margin-bottom: 36px;
+    }
+    a.card {
+      display: block;
+      background: var(--white);
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 16px;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    a.card:hover {
+      border-color: var(--blue);
+      box-shadow: 0 4px 16px rgba(0,88,255,0.12);
+    }
+    .card h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .card p {
+      font-size: 0.9rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+    }
+    .card .tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--blue);
+      background: #e8f0ff;
+      padding: 3px 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Saša Savić</h1>
+    <p class="subtitle">Papers &amp; White Papers</p>
+
+    <a class="card" href="autonomous-agent-blueprint.html">
+      <span class="tag">White Paper</span>
+      <h2>The Autonomous Agent Blueprint</h2>
+      <p>Building Trust-First AI Teammates — A Framework for Enterprise-Grade Agentic Operations. February 2026.</p>
+    </a>
+
+    <a class="card" href="ai-native-sdlc.html">
+      <span class="tag">White Paper</span>
+      <h2>AI-Native SDLC</h2>
+      <p>Software Development Lifecycle reimagined for AI-native engineering teams.</p>
+    </a>
+  </div>
+</body>
+</html>
