@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The AI-Native SDLC — Constraint-Driven Development</title>
+<style>
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#010926;--blue:#0058FF;--blue-light:#4d8cff;--blue-pale:#e8f0ff;
+  --dark-card:#0d1b3e;--dark-card-hover:#142554;--dark-surface:#060e24;
+  --green:#00d4aa;--green-dim:#0a3d32;--red:#ff6b6b;--red-dim:#3d1a1a;
+  --amber:#ffb347;--amber-dim:#3d2e1a;
+  --gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;
+  --font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'SF Mono','Fira Code','Cascadia Code',monospace;
+  --radius:12px;--radius-sm:8px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--font);background:var(--navy);color:#e2e8f0;line-height:1.7;overflow-x:hidden}
+a{color:var(--blue-light);text-decoration:none}
+a:hover{text-decoration:underline}
+::selection{background:var(--blue);color:white}
+
+/* ── Navigation ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(1,9,38,0.92);backdrop-filter:blur(20px);border-bottom:1px solid rgba(77,140,255,0.1);transition:transform .3s}
+nav.hidden{transform:translateY(-100%)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 2rem;display:flex;align-items:center;height:56px;gap:1rem;overflow-x:auto}
+.nav-logo{font-weight:700;font-size:.85rem;color:var(--blue-light);white-space:nowrap;letter-spacing:.5px}
+.nav-links{display:flex;gap:.25rem;margin-left:auto}
+.nav-links a{font-size:.75rem;padding:.35rem .65rem;border-radius:6px;color:var(--gray-400);white-space:nowrap;transition:all .2s}
+.nav-links a:hover,.nav-links a.active{color:white;background:rgba(77,140,255,0.12);text-decoration:none}
+
+/* ── Sections ── */
+section{padding:5rem 2rem;max-width:1100px;margin:0 auto}
+.section-label{font-size:.7rem;text-transform:uppercase;letter-spacing:3px;color:var(--blue-light);font-weight:600;margin-bottom:.5rem}
+.section-title{font-size:2.2rem;font-weight:800;color:white;line-height:1.2;margin-bottom:1rem}
+.section-subtitle{font-size:1.1rem;color:var(--gray-400);max-width:700px;line-height:1.8;margin-bottom:2.5rem}
+
+/* ── Hero ── */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:2rem;position:relative}
+#hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(0,88,255,0.08) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(0,88,255,0.1);border:1px solid rgba(0,88,255,0.2);border-radius:20px;padding:.4rem 1rem;font-size:.75rem;color:var(--blue-light);margin-bottom:2rem}
+.hero-title{font-size:clamp(2.5rem,6vw,4rem);font-weight:800;color:white;line-height:1.1;margin-bottom:1.5rem;max-width:800px}
+.hero-title span{background:linear-gradient(135deg,var(--blue-light),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-desc{font-size:1.15rem;color:var(--gray-400);max-width:650px;line-height:1.8;margin-bottom:3rem}
+.hero-cta{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;border-radius:var(--radius-sm);font-weight:600;font-size:.9rem;transition:all .2s;cursor:pointer;border:none;font-family:var(--font)}
+.btn-primary{background:var(--blue);color:white}
+.btn-primary:hover{background:var(--blue-light);text-decoration:none;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--gray-400);border:1px solid rgba(255,255,255,0.1)}
+.btn-ghost:hover{color:white;border-color:rgba(255,255,255,0.3);text-decoration:none}
+.scroll-hint{position:absolute;bottom:2rem;animation:float 2s infinite ease-in-out;color:var(--gray-500);font-size:.8rem}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+/* ── Problem Section ── */
+.problem-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2rem}
+@media(max-width:768px){.problem-grid{grid-template-columns:1fr}}
+.problem-card{background:var(--dark-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:1.5rem;transition:all .3s}
+.problem-card:hover{border-color:rgba(255,107,107,0.3)}
+.problem-icon{font-size:1.5rem;margin-bottom:.75rem}
+.problem-card h3{font-size:1rem;color:white;margin-bottom:.5rem}
+.problem-card p{font-size:.88rem;color:var(--gray-400);line-height:1.7}
+
+/* ── Simulator ── */
+.simulator{background:var(--dark-surface);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:2rem;margin-top:3rem}
+.sim-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.sim-header h3{font-size:1.1rem;color:white}
+.sim-toggle{display:flex;background:rgba(255,255,255,0.06);border-radius:8px;overflow:hidden}
+.sim-toggle button{padding:.5rem 1rem;font-size:.8rem;font-weight:600;border:none;background:none;color:var(--gray-400);cursor:pointer;transition:all .2s;font-family:var(--font)}
+.sim-toggle button.active{background:var(--blue);color:white}
+.sim-pipeline{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap}
+.sim-step{flex:1;min-width:120px;border-radius:var(--radius-sm);padding:1rem .75rem;text-align:center;transition:all .6s ease;position:relative}
+.sim-step .step-num{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-bottom:.25rem}
+.sim-step .step-name{font-size:.8rem;font-weight:600;margin-bottom:.5rem}
+.sim-step .step-detail{font-size:.7rem;opacity:.7;line-height:1.4}
+.sim-step .assumptions{margin-top:.5rem;font-size:.7rem;font-weight:700}
+.sim-step.ok{background:var(--green-dim);border:1px solid rgba(0,212,170,0.3);color:var(--green)}
+.sim-step.warn{background:var(--amber-dim);border:1px solid rgba(255,179,71,0.3);color:var(--amber)}
+.sim-step.bad{background:var(--red-dim);border:1px solid rgba(255,107,107,0.3);color:var(--red)}
+.sim-step.neutral{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:var(--gray-400)}
+.sim-result{padding:1rem;border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6;margin-top:.5rem;transition:all .4s}
+.sim-result.good{background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);color:var(--green)}
+.sim-result.bad{background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.2);color:var(--red)}
+.gate-badge{display:inline-block;font-size:.6rem;padding:.15rem .4rem;border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:.35rem}
+.gate-pass{background:rgba(0,212,170,0.2);color:var(--green)}
+.gate-fail{background:rgba(255,107,107,0.2);color:var(--red)}
+.gate-none{background:rgba(255,255,255,0.05);color:var(--gray-500)}
+
+/* ── Pipeline (Ideation) ── */
+.pipeline{display:flex;gap:2px;margin:2rem 0;flex-wrap:wrap}
+.pipeline-stage{flex:1;min-width:130px;background:var(--dark-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);padding:1rem .75rem;cursor:pointer;transition:all .3s;text-align:center;position:relative}
+.pipeline-stage:hover{border-color:var(--blue);transform:translateY(-2px)}
+.pipeline-stage.active{background:rgba(0,88,255,0.1);border-color:var(--blue)}
+.pipeline-stage .stage-num{font-size:.6rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue-light);margin-bottom:.35rem}
+.pipeline-stage .stage-name{font-size:.82rem;font-weight:700;color:white}
+.pipeline-stage::after{content:'→';position:absolute;right:-12px;top:50%;transform:translateY(-50%);color:var(--gray-600);font-size:.8rem}
+.pipeline-stage:last-child::after{display:none}
+.pipeline-detail{background:var(--dark-surface);border:1px solid rgba(0,88,255,0.15);border-radius:var(--radius);padding:1.5rem;margin-top:1rem;display:none;animation:fadeSlide .3s ease}
+.pipeline-detail.visible{display:block}
+.pipeline-detail h4{color:var(--blue-light);font-size:.95rem;margin-bottom:.75rem}
+.pipeline-detail p{font-size:.88rem;color:var(--gray-400);margin-bottom:.75rem;line-height:1.7}
+.pipeline-detail .output-box{background:rgba(0,88,255,0.05);border:1px solid rgba(0,88,255,0.15);border-radius:var(--radius-sm);padding:1rem;margin-top:.75rem}
+.pipeline-detail .output-box h5{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--blue-light);margin-bottom:.5rem}
+.pipeline-detail .output-box code{font-family:var(--mono);font-size:.8rem;color:var(--gray-400);line-height:1.6}
+.tag{display:inline-block;font-size:.65rem;padding:.2rem .5rem;border-radius:4px;font-weight:600;margin-right:.25rem;margin-bottom:.25rem}
+.tag-who{background:rgba(0,212,170,0.1);color:var(--green)}
+.tag-gate{background:rgba(255,179,71,0.1);color:var(--amber)}
+
+/* ── Stepper (Build Process) ── */
+.stepper{position:relative;margin:2rem 0;padding-left:2rem}
+.stepper::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.06)}
+.step-item{position:relative;margin-bottom:1rem;padding-left:2rem}
+.step-dot{position:absolute;left:-2rem;top:.15rem;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;transition:all .3s;cursor:pointer;z-index:1}
+.step-dot.locked{background:var(--dark-card);border:2px solid rgba(255,255,255,0.1);color:var(--gray-500)}
+.step-dot.active{background:var(--blue);border:2px solid var(--blue-light);color:white;box-shadow:0 0 12px rgba(0,88,255,0.4)}
+.step-dot.done{background:var(--green);border:2px solid var(--green);color:var(--navy)}
+.step-header{cursor:pointer;transition:all .2s}
+.step-header:hover .step-title{color:var(--blue-light)}
+.step-title{font-size:1rem;font-weight:700;color:white;margin-bottom:.15rem;transition:color .2s}
+.step-brief{font-size:.82rem;color:var(--gray-500)}
+.step-content{display:none;margin-top:1rem;padding:1.25rem;background:var(--dark-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);animation:fadeSlide .3s ease}
+.step-content.visible{display:block}
+.step-content p{font-size:.88rem;color:var(--gray-400);margin-bottom:.75rem;line-height:1.7}
+.step-content .gate{display:flex;align-items:flex-start;gap:.75rem;padding:.75rem 1rem;border-radius:var(--radius-sm);margin-top:1rem}
+.step-content .gate.pass{background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.15)}
+.step-content .gate .gate-icon{font-size:1.1rem;flex-shrink:0;margin-top:.1rem}
+.step-content .gate .gate-text{font-size:.82rem;color:var(--gray-400);line-height:1.6}
+.step-content .gate .gate-text strong{color:var(--green)}
+.activities{display:grid;gap:.5rem;margin:.75rem 0}
+.activity{display:flex;align-items:flex-start;gap:.5rem;font-size:.82rem;color:var(--gray-400)}
+.activity::before{content:'▸';color:var(--blue-light);flex-shrink:0;margin-top:1px}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── File Tree ── */
+.file-tree{background:var(--dark-surface);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:1.5rem;font-family:var(--mono);font-size:.82rem;line-height:2;margin:2rem 0}
+.tree-item{padding-left:1.5rem;border-left:1px solid rgba(255,255,255,0.05);margin-left:.5rem}
+.tree-item.root{padding-left:0;border-left:none;margin-left:0}
+.tree-label{cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;padding:.1rem .4rem;border-radius:4px;transition:all .2s;color:var(--gray-400)}
+.tree-label:hover{background:rgba(0,88,255,0.1);color:var(--blue-light)}
+.tree-label.file-md{color:var(--green)}
+.tree-label.active{background:rgba(0,88,255,0.15);color:var(--blue-light)}
+.tree-content{display:none;margin:.5rem 0 .5rem 1.5rem;padding:1rem;background:var(--dark-card);border:1px solid rgba(77,140,255,0.15);border-radius:var(--radius-sm);font-family:var(--font);font-size:.82rem;color:var(--gray-400);line-height:1.7;animation:fadeSlide .3s ease}
+.tree-content.visible{display:block}
+.tree-content strong{color:var(--blue-light)}
+.tree-content code{font-family:var(--mono);background:rgba(255,255,255,0.05);padding:.1rem .3rem;border-radius:3px;font-size:.78rem}
+
+/* ── Constraint Flow ── */
+.constraint-flow{display:flex;flex-direction:column;gap:2px;margin:2rem 0}
+.constraint-level{display:flex;align-items:stretch;gap:1rem;transition:all .3s}
+.constraint-bar{width:4px;border-radius:2px;flex-shrink:0;transition:all .3s}
+.constraint-card{flex:1;background:var(--dark-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);padding:1rem 1.25rem;cursor:pointer;transition:all .3s}
+.constraint-card:hover{border-color:var(--blue)}
+.constraint-card.expanded{background:rgba(0,88,255,0.05);border-color:rgba(0,88,255,0.2)}
+.constraint-card h4{font-size:.88rem;color:white;margin-bottom:.25rem}
+.constraint-card .constraint-rule{font-size:.8rem;color:var(--gray-400)}
+.constraint-card .constraint-detail{display:none;margin-top:.75rem;padding-top:.75rem;border-top:1px solid rgba(255,255,255,0.06);font-size:.82rem;color:var(--gray-400);line-height:1.7}
+.constraint-card.expanded .constraint-detail{display:block;animation:fadeSlide .3s ease}
+.l1 .constraint-bar{background:var(--red)}
+.l2 .constraint-bar{background:var(--amber)}
+.l3 .constraint-bar{background:var(--blue-light)}
+.l4 .constraint-bar{background:var(--green)}
+
+/* ── Test Pyramid ── */
+.pyramid{display:flex;flex-direction:column;align-items:center;gap:4px;margin:2rem 0}
+.pyramid-row{display:flex;align-items:center;gap:1rem;width:100%}
+.pyramid-bar{height:52px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .3s;text-align:center;padding:0 1rem}
+.pyramid-bar:hover{transform:scaleY(1.05)}
+.pyramid-bar .bar-sub{font-size:.65rem;font-weight:400;opacity:.7;display:block;margin-top:1px}
+.pyramid-step{font-size:.7rem;color:var(--gray-500);white-space:nowrap;width:60px;text-align:right;flex-shrink:0}
+.p5{width:30%;background:rgba(255,107,107,0.15);border:1px solid rgba(255,107,107,0.3);color:var(--red);margin:0 auto}
+.p4{width:45%;background:rgba(255,179,71,0.15);border:1px solid rgba(255,179,71,0.3);color:var(--amber);margin:0 auto}
+.p3{width:60%;background:rgba(0,88,255,0.15);border:1px solid rgba(0,88,255,0.3);color:var(--blue-light);margin:0 auto}
+.p2{width:75%;background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);color:var(--green);margin:0 auto}
+.p1{width:90%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--gray-400);margin:0 auto}
+
+/* ── Scenario Selector ── */
+.scenarios{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0}
+@media(max-width:768px){.scenarios{grid-template-columns:1fr}}
+.scenario-card{background:var(--dark-card);border:2px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:1.5rem;cursor:pointer;transition:all .3s;text-align:center}
+.scenario-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.scenario-card.selected{border-color:var(--blue);background:rgba(0,88,255,0.08)}
+.scenario-card .sc-icon{font-size:2rem;margin-bottom:.75rem}
+.scenario-card h3{font-size:1rem;color:white;margin-bottom:.35rem}
+.scenario-card p{font-size:.82rem;color:var(--gray-500);line-height:1.6}
+.scenario-detail{background:var(--dark-surface);border:1px solid rgba(0,88,255,0.15);border-radius:var(--radius);padding:1.5rem;margin-top:1.5rem;display:none;animation:fadeSlide .3s}
+.scenario-detail.visible{display:block}
+.scenario-detail h4{color:var(--blue-light);font-size:.95rem;margin-bottom:1rem}
+.sc-steps{display:flex;flex-direction:column;gap:.5rem}
+.sc-step{display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;border-radius:var(--radius-sm);font-size:.85rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04)}
+.sc-step .sc-check{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0}
+.sc-step .sc-check.yes{background:var(--green);color:var(--navy)}
+.sc-step .sc-check.skip{background:rgba(255,255,255,0.06);color:var(--gray-500)}
+.sc-step .sc-check.mod{background:rgba(255,179,71,0.2);color:var(--amber)}
+.sc-step span{color:var(--gray-400)}
+.sc-step strong{color:white}
+
+/* ── Principle Cards ── */
+.principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin:2rem 0}
+.principle{background:var(--dark-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:1.5rem;transition:all .3s}
+.principle:hover{border-color:rgba(0,212,170,0.3)}
+.principle .p-num{font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);font-weight:600;margin-bottom:.5rem}
+.principle h3{font-size:.95rem;color:white;margin-bottom:.5rem}
+.principle p{font-size:.85rem;color:var(--gray-400);line-height:1.7}
+
+/* ── Footer ── */
+footer{text-align:center;padding:4rem 2rem 3rem;color:var(--gray-500);font-size:.82rem;border-top:1px solid rgba(255,255,255,0.04)}
+footer strong{color:var(--gray-400)}
+
+/* ── Responsive ── */
+@media(max-width:640px){
+  section{padding:3rem 1.25rem}
+  .section-title{font-size:1.6rem}
+  .pipeline{flex-direction:column}
+  .pipeline-stage::after{display:none}
+  .problem-grid{grid-template-columns:1fr}
+  .sim-pipeline{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav id="topnav">
+  <div class="nav-inner">
+    <div class="nav-logo">AI-NATIVE SDLC</div>
+    <div class="nav-links">
+      <a href="#problem">Problem</a>
+      <a href="#ideation">Ideation</a>
+      <a href="#build">Build</a>
+      <a href="#instructions">Instructions</a>
+      <a href="#constraints">Constraints</a>
+      <a href="#testing">Testing</a>
+      <a href="#apply">Apply</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section id="hero">
+  <div class="hero-badge">◆ Framework for AI-Assisted Software Development</div>
+  <h1 class="hero-title">The AI-Native <span>SDLC</span></h1>
+  <p class="hero-desc">A constraint-driven development lifecycle for a world where AI agents write the code and humans write the rules. From ideation to deployment — every step designed to prevent assumption propagation.</p>
+  <div class="hero-cta">
+    <a href="#problem" class="btn btn-primary">Explore the Framework ↓</a>
+    <a href="#apply" class="btn btn-ghost">Jump to Application →</a>
+  </div>
+  <div class="scroll-hint">↓ scroll to begin</div>
+</section>
+
+<!-- ── The Problem ── -->
+<section id="problem">
+  <div class="section-label">The Problem</div>
+  <h2 class="section-title">Why the Traditional SDLC is Broken</h2>
+  <p class="section-subtitle">AI agents eliminated the code production bottleneck. They exposed a far more dangerous one: unconstrained logical assumptions compounding at machine speed.</p>
+
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="problem-icon">🧨</div>
+      <h3>Assumption Propagation</h3>
+      <p>Each generation step inherits unchallenged assumptions from every previous step. By step five, the codebase contains dozens of compounded assumptions — internally consistent but externally wrong.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">👁️</div>
+      <h3>Code Review Collapse</h3>
+      <p>A 2,000-line PR generated in 10 minutes takes 2 hours to review. The reviewer reconstructs reasoning from output. The agent has an information advantage over its own reviewer.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">🔄</div>
+      <h3>The Vicious Cycle</h3>
+      <p>Iterative "improvements" cause the model to bloat the codebase with further assumptions while trying to maintain structural integrity of what it previously built.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">🎯</div>
+      <h3>Logical, Not Syntactic</h3>
+      <p>The code compiles. Types check. Basic tests pass. The failure is logical — reasonable choices about business rules, error handling, and domain constraints that are silently wrong.</p>
+    </div>
+  </div>
+
+  <!-- Assumption Propagation Simulator -->
+  <div class="simulator">
+    <div class="sim-header">
+      <h3>⚡ Assumption Propagation Simulator</h3>
+      <div class="sim-toggle">
+        <button id="sim-off" class="active" onclick="setSim(false)">Without Framework</button>
+        <button id="sim-on" onclick="setSim(true)">With Framework</button>
+      </div>
+    </div>
+    <div class="sim-pipeline" id="simPipeline"></div>
+    <div class="sim-result" id="simResult"></div>
+  </div>
+</section>
+
+<!-- ── Ideation Framework ── -->
+<section id="ideation">
+  <div class="section-label">Stage 1 of 3</div>
+  <h2 class="section-title">The Ideation Framework</h2>
+  <p class="section-subtitle">Seven stages that transform a raw idea into machine-consumable artifacts. The goal: close every degree of freedom before code generation begins.</p>
+
+  <div class="pipeline" id="ideationPipeline">
+    <div class="pipeline-stage" data-stage="0">
+      <div class="stage-num">Stage 1</div>
+      <div class="stage-name">Spark</div>
+    </div>
+    <div class="pipeline-stage" data-stage="1">
+      <div class="stage-num">Stage 2</div>
+      <div class="stage-name">Capture</div>
+    </div>
+    <div class="pipeline-stage" data-stage="2">
+      <div class="stage-num">Stage 3</div>
+      <div class="stage-name">Explore</div>
+    </div>
+    <div class="pipeline-stage" data-stage="3">
+      <div class="stage-num">Stage 4</div>
+      <div class="stage-name">Refine</div>
+    </div>
+    <div class="pipeline-stage" data-stage="4">
+      <div class="stage-num">Stage 5</div>
+      <div class="stage-name">Consensus</div>
+    </div>
+    <div class="pipeline-stage" data-stage="5">
+      <div class="stage-num">Stage 6</div>
+      <div class="stage-name">Formalize</div>
+    </div>
+    <div class="pipeline-stage" data-stage="6">
+      <div class="stage-num">Stage 7</div>
+      <div class="stage-name">Handoff</div>
+    </div>
+  </div>
+
+  <div id="ideationDetail" class="pipeline-detail"></div>
+</section>
+
+<!-- ── Phased Build ── -->
+<section id="build">
+  <div class="section-label">Stage 2 of 3</div>
+  <h2 class="section-title">The Phased Build Process</h2>
+  <p class="section-subtitle">Seven steps, each with a test gate. No step proceeds until the gate passes. The gate is automated verification against explicit constraints — not human review.</p>
+
+  <div class="stepper" id="buildStepper"></div>
+</section>
+
+<!-- ── Hierarchical Instructions ── -->
+<section id="instructions">
+  <div class="section-label">Implementation Mechanism</div>
+  <h2 class="section-title">The Hierarchical Instruction Model</h2>
+  <p class="section-subtitle">CLAUDE.md files at every layer of the codebase. Context narrows as you descend. The agent reads breadcrumbs top-down — no assumptions required.</p>
+
+  <div class="file-tree" id="fileTree"></div>
+
+  <div class="principles" style="margin-top:2rem">
+    <div class="principle">
+      <div class="p-num">Principle 1</div>
+      <h3>Context Narrowing</h3>
+      <p>Root says "Protocol-based design." Domain says "services depend on Protocol interfaces." Services says "inject via constructor, declare as Protocol types." Each level adds specificity.</p>
+    </div>
+    <div class="principle">
+      <div class="p-num">Principle 2</div>
+      <h3>Instructions Are Authoritative</h3>
+      <p>If the instruction file and existing code disagree, the instruction file wins. The agent flags the inconsistency — it doesn't inherit the inconsistency.</p>
+    </div>
+    <div class="principle">
+      <div class="p-num">Principle 3</div>
+      <h3>Living Documents</h3>
+      <p>Instruction files evolve with the code. Version-controlled, git-blamed, reviewed like code changes. The institutional memory of architectural decisions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Constraint Architecture ── -->
+<section id="constraints">
+  <div class="section-label">The Theory</div>
+  <h2 class="section-title">The Constraint Architecture</h2>
+  <p class="section-subtitle">Constraints eliminate interpretation. Instructions leave room for it. In AI-Native development, constraints are the primary mechanism for controlling agent behavior.</p>
+
+  <h3 style="font-size:1rem;color:white;margin-bottom:.5rem">Constraint Inheritance — click to expand</h3>
+  <p style="font-size:.85rem;color:var(--gray-500);margin-bottom:1rem">Lower levels <strong style="color:white">tighten</strong> but never loosen higher-level constraints.</p>
+
+  <div class="constraint-flow" id="constraintFlow"></div>
+
+  <div style="margin-top:2.5rem">
+    <h3 style="font-size:1rem;color:white;margin-bottom:.5rem">The llm.txt Specification</h3>
+    <p style="font-size:.85rem;color:var(--gray-400);margin-bottom:1rem;max-width:700px">Unlike CLAUDE.md (how to work), llm.txt defines <strong style="color:white">what tools and patterns are available</strong>. Structured for machine consumption — options, decision frameworks, and explicit constraints per domain.</p>
+    <div class="principles">
+      <div class="principle">
+        <div class="p-num">Property</div>
+        <h3>Structured, Not Narrative</h3>
+        <p>Clear headings, explicit enumerations, decision trees with concrete criteria. Designed for agents, not prose readers.</p>
+      </div>
+      <div class="principle">
+        <div class="p-num">Property</div>
+        <h3>Options, Not Opinions</h3>
+        <p>Presents what is available and when to use each option. The agent selects based on constraints, not training bias.</p>
+      </div>
+      <div class="principle">
+        <div class="p-num">Property</div>
+        <h3>Domain-Scoped</h3>
+        <p>Each domain has its own llm.txt. Payments says nothing about auth. Auth says nothing about payments. No cross-contamination.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Testing ── -->
+<section id="testing">
+  <div class="section-label">Quality Mechanism</div>
+  <h2 class="section-title">The Test-Driven Constraint Model</h2>
+  <p class="section-subtitle">In AI-native development, tests are not verification — they are <strong style="color:white">boundaries</strong>. A failing test is a hard constraint the agent cannot cross.</p>
+
+  <h3 style="font-size:1rem;color:white;margin:1.5rem 0 .75rem">The AI-Native Test Pyramid</h3>
+  <div class="pyramid">
+    <div class="pyramid-row"><span class="pyramid-step">Step 6</span><div class="pyramid-bar p5">E2E Tests<span class="bar-sub">Human acceptance</span></div></div>
+    <div class="pyramid-row"><span class="pyramid-step">Step 4</span><div class="pyramid-bar p4">Integration Tests<span class="bar-sub">Implementation verification</span></div></div>
+    <div class="pyramid-row"><span class="pyramid-step">Step 3</span><div class="pyramid-bar p3">Behavioral Tests<span class="bar-sub">Specification constraints</span></div></div>
+    <div class="pyramid-row"><span class="pyramid-step">Step 2</span><div class="pyramid-bar p2">Contract Tests<span class="bar-sub">Interface constraints</span></div></div>
+    <div class="pyramid-row"><span class="pyramid-step">Step 1</span><div class="pyramid-bar p1">Structural Tests<span class="bar-sub">Layout &amp; convention</span></div></div>
+  </div>
+
+  <div class="principles" style="margin-top:2rem">
+    <div class="principle">
+      <div class="p-num">Core Rule</div>
+      <h3>Tests Before Implementation</h3>
+      <p>Tests written after implementation validate assumptions — circular reasoning. Tests written before constrain the implementation space. This is not optional.</p>
+    </div>
+    <div class="principle">
+      <div class="p-num">Core Rule</div>
+      <h3>Test Immutability</h3>
+      <p>Tests from Steps 2-3 may NOT be modified in Step 4. If implementation fails a test: fix the implementation or formally revise the specification. Never silently change the test.</p>
+    </div>
+    <div class="principle">
+      <div class="p-num">Core Rule</div>
+      <h3>Constitution, Not Rubber Stamp</h3>
+      <p>When test and implementation conflict, the test wins. Tests encode the specification. The implementation must satisfy it — not the other way around.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Apply It ── -->
+<section id="apply">
+  <div class="section-label">Put It Into Practice</div>
+  <h2 class="section-title">Apply the Framework</h2>
+  <p class="section-subtitle">Select your scenario to see the customized process — which steps apply, which are modified, and where to focus your effort.</p>
+
+  <div class="scenarios">
+    <div class="scenario-card" data-scenario="greenfield" onclick="selectScenario('greenfield')">
+      <div class="sc-icon">🏗️</div>
+      <h3>Greenfield</h3>
+      <p>New project from scratch. Full process, maximum freedom, maximum risk of unconstrained assumptions.</p>
+    </div>
+    <div class="scenario-card" data-scenario="refactor" onclick="selectScenario('refactor')">
+      <div class="sc-icon">🔧</div>
+      <h3>Refactoring</h3>
+      <p>Existing project, improving structure. Must understand before changing. Archaeology is critical.</p>
+    </div>
+    <div class="scenario-card" data-scenario="modernise" onclick="selectScenario('modernise')">
+      <div class="sc-icon">🚀</div>
+      <h3>Modernisation</h3>
+      <p>Legacy system rebuilt on new platform. Extract domain rules. Parity testing. Highest complexity.</p>
+    </div>
+  </div>
+  <div id="scenarioDetail" class="scenario-detail"></div>
+
+  <div style="margin-top:3rem;text-align:center;padding:2rem;background:var(--dark-surface);border:1px solid rgba(0,88,255,0.15);border-radius:var(--radius)">
+    <h3 style="font-size:1.2rem;color:white;margin-bottom:.75rem">The Framework in One Sentence</h3>
+    <p style="font-size:1rem;color:var(--gray-400);max-width:750px;margin:0 auto;line-height:1.8">Define constraints explicitly at every level, verify adherence automatically at every step, and treat the instruction hierarchy and test suite as the primary governance mechanisms — <strong style="color:var(--green)">because the model's judgment is not a reliable substitute for structural enforcement.</strong></p>
+  </div>
+</section>
+
+<footer>
+  <p><strong>The AI-Native SDLC</strong> — Constraint-Driven Development</p>
+  <p style="margin-top:.25rem">Written by Saša Savić & Vlad · March 2026 · Sydney, Australia</p>
+</footer>
+
+<script>
+// ── Data ──
+
+const ideationData = [
+  {
+    title: 'Spark — Identify the Need',
+    desc: 'Observe user behavior, market signals, or operational pain. Unstructured brainstorming. No filtering, no feasibility analysis, no technical constraints. Just the raw idea.',
+    who: 'Anyone',
+    gate: 'Does this idea address a real need?',
+    output: 'A raw idea statement — one paragraph, plain language.'
+  },
+  {
+    title: 'Capture — Structure the Idea',
+    desc: 'Define the problem (not the solution). Identify target users and their current experience. Capture success criteria. Identify known constraints and open questions.',
+    who: 'Product Owner + Originator',
+    gate: 'Is the problem clearly defined? Are we solving a problem or building a feature?',
+    output: 'Structured idea brief: Problem, User, Current State, Success Criteria, Constraints, Open Questions.'
+  },
+  {
+    title: 'Explore — Map the Solution Space',
+    desc: 'Technical feasibility for 2-4 candidate approaches. Architectural fit assessment. Competitive analysis. And critically: a <strong>technological alignment inventory</strong> — not "we could use a queue" but "we have SQS FIFO in ap-southeast-2 at 200msg/s with $50/mo ceiling."',
+    who: 'Engineering Lead + Product + Architect',
+    gate: 'Do we have at least two viable approaches with understood trade-offs?',
+    output: 'Exploration document with approaches, trade-offs, dependency map, and tech inventory.'
+  },
+  {
+    title: 'Refine — Narrow and Specify',
+    desc: 'Select the preferred approach. Define explicit constraints and boundaries. <strong>Identify every assumption and validate it.</strong> Define what is out of scope. Produce interface sketches and data model outlines.',
+    who: 'Full Technical Team + Product',
+    gate: 'Can we explain this to an engineer with no context? Can we explain it to an AI agent?',
+    output: 'Selected approach + explicit assumptions list + scope boundary + draft contracts.'
+  },
+  {
+    title: 'Consensus — Align All Parties',
+    desc: 'Review with all stakeholders. Challenge assumptions — especially the "validated" ones. Confirm technological and architectural alignment. This meeting MUST include the AI agent\'s constraints author.',
+    who: 'Product + Engineering + Architecture + Ops + Constraints Author',
+    gate: 'Would every person make the same architectural decisions independently?',
+    output: 'Signed-off approach with no unresolved ambiguities in the critical path.'
+  },
+  {
+    title: 'Formalize — Produce Artifacts',
+    desc: 'Write the PRD (for humans) AND the constraint specification (for agents). Define llm.txt artifacts for affected domains. Produce testable acceptance criteria and architectural decision records.',
+    who: 'Product + Engineering Lead + Constraints Author',
+    gate: 'Can an AI agent produce a correct implementation without asking clarifying questions?',
+    output: 'PRD + CONSTRAINTS.md + llm.txt + ACCEPTANCE.md + ADRs'
+  },
+  {
+    title: 'Handoff — Transfer to Build',
+    desc: 'Package all artifacts. Brief the implementing agent on context not captured in documents. Confirm the phased build plan. Set up verification checkpoints.',
+    who: 'Ideation Team → Implementation Team/Agent',
+    gate: 'All artifacts present and reviewed. Implementation does not begin until this gate passes.',
+    output: 'Complete package: PRD.md, CONSTRAINTS.md, llm.txt, ARCHITECTURE.md, ACCEPTANCE.md, SCOPE.md, ASSUMPTIONS.md'
+  }
+];
+
+const buildData = [
+  {
+    num: '0', title: 'Codebase Archaeology', brief: 'Understand before changing (refactor/modernise only)',
+    desc: 'Full codebase ingestion. Dependency graph extraction. Pattern identification. Structural inventory. Technical debt register. <strong>Assumption inventory</strong> — what implicit decisions exist undocumented?',
+    activities: ['Map all module boundaries and dependencies','Identify consistent patterns AND inconsistencies','Inventory implicit assumptions baked into code','Assess migration risk per component','Generate ARCHAEOLOGY.md with system overview'],
+    gate: 'Can the agent explain the architecture, identify boundaries, and predict where a change would propagate?'
+  },
+  {
+    num: '1', title: 'Define Codebase Structure', brief: 'Project scaffold, module boundaries, dependency rules',
+    desc: 'Establish the physical and logical structure before any implementation code exists. Define directory structure, naming conventions, dependency rules, configuration model. <strong>Create the hierarchical instruction files (CLAUDE.md) at this step.</strong>',
+    activities: ['Define directory structure and module boundaries','Establish naming conventions (files, classes, functions)','Define dependency rules (what can import what)','Create CLAUDE.md files at every significant layer','Scaffold the project with empty modules'],
+    gate: 'Can a new agent determine where any piece of code belongs by reading instruction files alone?'
+  },
+  {
+    num: '2', title: 'Define Contracts', brief: 'Interfaces, data models, integration contracts + contract tests',
+    desc: 'Every interface, data model, and integration contract — defined before any implementation logic. Full type annotations, documented preconditions/postconditions, explicit error contracts. <strong>Contract tests are written at this step.</strong>',
+    activities: ['Define data models with field types, validation, relationships','Define service interfaces with full signatures','Define error contracts (which exceptions, when, with what data)','Define external integration contracts (API, DB, messaging)','Write contract tests that validate interface completeness'],
+    gate: 'All models validate against edge cases. Relationships are consistent. Error contracts are exhaustive. Contract tests pass.'
+  },
+  {
+    num: '3', title: 'Define Behavioral Specs', brief: 'What the system does, precisely + behavioral tests',
+    desc: 'Translate each contract into precise, testable behavioral specifications. GIVEN/WHEN/THEN for normal paths, edge cases, and failure modes. <strong>Behavioral tests are written and passing (against mocks) before implementation.</strong>',
+    activities: ['Translate contracts into GIVEN/WHEN/THEN specifications','Cover happy paths, every error case, boundary conditions','Define state transitions explicitly','Specify concurrency and ordering requirements','Write behavioral tests against mock implementations'],
+    gate: 'Every specification has an executable test. Tests pass against stubs. Every contract method has happy + error tests.'
+  },
+  {
+    num: '4', title: 'Implementation', brief: 'Build the bricks — the only step that produces business logic',
+    desc: 'Write the actual code against the contracts (Step 2) and behavioral specs (Step 3). Follow instruction files at each level. <strong>The agent MUST NOT modify contracts or add behaviors not defined in previous steps.</strong>',
+    activities: ['Implement services against defined contracts','Follow CLAUDE.md instructions at each module level','Wire dependency injection and service registration','Implement infrastructure providers','All behavioral tests from Step 3 must pass against real code'],
+    gate: 'All behavioral tests pass. Unit + integration tests pass. No test modified to match implementation. Tests are the constitution.'
+  },
+  {
+    num: '5', title: 'Actor-Critic Verification', brief: 'System-specific critic evaluates the whole build',
+    desc: 'A <strong>separate agent</strong> evaluates the implementation against original constraints. Not generic code review — system-specific verification across four axes: constraint adherence, assumption detection, structural integrity, and test completeness.',
+    activities: ['Evaluate every constraint: addressed, missing, or partial?','Detect unconstrained assumptions — decisions not in specs','Verify structural integrity against instruction files','Assess test completeness — gaps, sensitivity, missed edges','Produce Critic report with severity-rated findings'],
+    gate: 'No Critical findings. All Warnings resolved or explicitly accepted with documented justification.'
+  },
+  {
+    num: '6', title: 'Narrative Documentation', brief: 'Interactive visual representation of the system',
+    desc: 'The agent produces an interactive HTML visualization — architecture explorer, request lifecycle tracer, state machine visualizer, dependency graph. <strong>Not documentation. A learning experience.</strong> This becomes input for future agents.',
+    activities: ['Full codebase traversal and story identification','Design interactive visualizations per key system path','Build self-contained HTML with embedded SVG and JS','Include state machine simulations and decision trees','Verify every visual element maps to real code'],
+    gate: 'Can a new team member understand the system\'s architecture and critical paths from this document alone?'
+  }
+];
+
+const constraintData = [
+  {
+    level: 'System Constraints', cls: 'l1',
+    rule: 'Non-negotiable. Apply everywhere. Cannot be loosened.',
+    detail: '<strong>Example:</strong> "All external API calls must have a timeout." This is absolute. No module, no component, no edge case may make an untimed external call. Period.'
+  },
+  {
+    level: 'Domain Constraints', cls: 'l2',
+    rule: 'Business rules and invariants. Tighten system constraints for specific domains.',
+    detail: '<strong>Example:</strong> "Payment API calls must have a 30-second timeout." Tightens the system constraint by specifying the value. The payments domain cannot loosen this to "no timeout."'
+  },
+  {
+    level: 'Module Constraints', cls: 'l3',
+    rule: 'Patterns, protocols, conventions. Specific to a module boundary.',
+    detail: '<strong>Example:</strong> "Stripe webhook validation must complete within 5 seconds." Tightens further — a specific operation within the payment domain. Encoded in the module\'s CLAUDE.md.'
+  },
+  {
+    level: 'Component Constraints', cls: 'l4',
+    rule: 'Implementation-level rules. Most specific. Tightest boundaries.',
+    detail: '<strong>Example:</strong> "Signature verification uses HMAC-SHA256 with constant-time comparison." Specifies the exact implementation. A component that tried to remove the timeout would violate inheritance.'
+  }
+];
+
+const scenarioData = {
+  greenfield: {
+    title: 'Greenfield — Full Process',
+    steps: [
+      { check: 'yes', text: '<strong>Ideation (7 stages)</strong> — Full process. Close every degree of freedom.' },
+      { check: 'skip', text: '<strong>Step 0: Archaeology</strong> — Skip. No existing code.' },
+      { check: 'yes', text: '<strong>Step 1: Structure</strong> — From scratch. Spend disproportionate time here. Most expensive mistake = wrong structure.' },
+      { check: 'yes', text: '<strong>Step 2: Contracts</strong> — New contracts. Define every interface before implementation.' },
+      { check: 'yes', text: '<strong>Step 3: Behavioral Specs</strong> — New specs. Full GIVEN/WHEN/THEN coverage.' },
+      { check: 'yes', text: '<strong>Step 4: Implementation</strong> — Clean build against contracts and specs.' },
+      { check: 'yes', text: '<strong>Step 5: Actor-Critic</strong> — Standard verification.' },
+      { check: 'yes', text: '<strong>Step 6: Narrative Docs</strong> — New interactive documentation.' }
+    ]
+  },
+  refactor: {
+    title: 'Refactoring — Understand, Then Change',
+    steps: [
+      { check: 'mod', text: '<strong>Ideation</strong> — Focused on target state, not full exploration.' },
+      { check: 'yes', text: '<strong>Step 0: Archaeology</strong> — CRITICAL. Map current structure, patterns, assumptions, debts.' },
+      { check: 'yes', text: '<strong>Step 1: Structure</strong> — Target state scaffold. Map existing → new locations.' },
+      { check: 'mod', text: '<strong>Step 2: Contracts</strong> — Preserve existing + revise where needed.' },
+      { check: 'mod', text: '<strong>Step 3: Behavioral Specs</strong> — Preserve existing behaviors + add new specs.' },
+      { check: 'mod', text: '<strong>Step 4: Implementation</strong> — Incremental migration, not full rebuild.' },
+      { check: 'mod', text: '<strong>Step 5: Actor-Critic</strong> — Standard + migration completeness check.' },
+      { check: 'yes', text: '<strong>Step 6: Narrative Docs</strong> — Update existing + build new narrative.' }
+    ]
+  },
+  modernise: {
+    title: 'Modernisation — Extract, Rebuild, Verify',
+    steps: [
+      { check: 'mod', text: '<strong>Ideation</strong> — New platform design informed by legacy archaeology.' },
+      { check: 'yes', text: '<strong>Step 0: Archaeology</strong> — CRITICAL. Performed on the LEGACY system. Extract undocumented domain rules.' },
+      { check: 'yes', text: '<strong>Step 1: Structure</strong> — New platform scaffold. Do NOT carry legacy patterns.' },
+      { check: 'mod', text: '<strong>Step 2: Contracts</strong> — Extract from legacy + define new. Watch for implicit contracts.' },
+      { check: 'mod', text: '<strong>Step 3: Behavioral Specs</strong> — Extract behaviors + add PARITY TESTS (same input → same output).' },
+      { check: 'yes', text: '<strong>Step 4: Implementation</strong> — Full rebuild on new platform.' },
+      { check: 'mod', text: '<strong>Step 5: Actor-Critic</strong> — Standard + parity verification against legacy.' },
+      { check: 'yes', text: '<strong>Step 6: Narrative Docs</strong> — New interactive documentation for new system.' }
+    ]
+  }
+};
+
+// ── Simulator ──
+const simSteps = [
+  { name: 'Structure', okDetail: 'Defined by instruction files', badDetail: 'Guessed from training data', okAssume: 0, badAssume: 2 },
+  { name: 'Contracts', okDetail: 'Explicit interfaces + contract tests', badDetail: 'Inferred from implementation needs', okAssume: 0, badAssume: 3 },
+  { name: 'Behavior', okDetail: 'Specs written + tested before code', badDetail: 'Assumed from requirements prose', okAssume: 0, badAssume: 4 },
+  { name: 'Implementation', okDetail: 'Constrained by tests + instruction files', badDetail: 'Free to make any assumption', okAssume: 1, badAssume: 8 },
+  { name: 'Verification', okDetail: 'System-specific Critic catches drift', badDetail: 'Human reviews 3,000 lines in 2 hours', okAssume: 0, badAssume: 2 }
+];
+
+function setSim(withFramework) {
+  document.getElementById('sim-off').classList.toggle('active', !withFramework);
+  document.getElementById('sim-on').classList.toggle('active', withFramework);
+  const pipe = document.getElementById('simPipeline');
+  const result = document.getElementById('simResult');
+  let html = '', totalAssume = 0;
+  simSteps.forEach((s, i) => {
+    const a = withFramework ? s.okAssume : s.badAssume;
+    totalAssume += a;
+    const cls = withFramework ? (a === 0 ? 'ok' : 'warn') : (totalAssume > 6 ? 'bad' : totalAssume > 3 ? 'warn' : 'neutral');
+    const gate = withFramework
+      ? `<span class="gate-badge ${a === 0 ? 'gate-pass' : 'gate-pass'}">✓ Gate</span>`
+      : `<span class="gate-badge gate-none">No gate</span>`;
+    html += `<div class="sim-step ${cls}">
+      <div class="step-num">Step ${i + 1}</div>
+      <div class="step-name">${s.name}</div>
+      <div class="step-detail">${withFramework ? s.okDetail : s.badDetail}</div>
+      <div class="assumptions">${withFramework ? (a === 0 ? '0 unconstrained' : a + ' caught') : '+' + s.badAssume + ' assumptions'}</div>
+      ${gate}
+    </div>`;
+  });
+  pipe.innerHTML = html;
+  if (withFramework) {
+    result.className = 'sim-result good';
+    result.innerHTML = `<strong>Result: 1 flagged assumption</strong> (caught at Step 4, documented and accepted). System aligns with specifications. No compounding.`;
+  } else {
+    result.className = 'sim-result bad';
+    result.innerHTML = `<strong>Result: ${totalAssume} unconstrained assumptions</strong> compounded through 5 steps. Internally consistent, externally misaligned. Discovered 3 weeks later in production.`;
+  }
+}
+
+// ── Ideation Pipeline ──
+function initIdeation() {
+  const stages = document.querySelectorAll('#ideationPipeline .pipeline-stage');
+  const detail = document.getElementById('ideationDetail');
+  stages.forEach((el, i) => {
+    el.addEventListener('click', () => {
+      stages.forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+      const d = ideationData[i];
+      detail.innerHTML = `
+        <h4>${d.title}</h4>
+        <p>${d.desc}</p>
+        <div style="margin:.5rem 0"><span class="tag tag-who">👤 ${d.who}</span><span class="tag tag-gate">🚪 ${d.gate}</span></div>
+        <div class="output-box"><h5>Output</h5><code>${d.output}</code></div>
+      `;
+      detail.classList.add('visible');
+    });
+  });
+}
+
+// ── Build Stepper ──
+function initBuild() {
+  const container = document.getElementById('buildStepper');
+  let html = '';
+  buildData.forEach((s, i) => {
+    html += `
+      <div class="step-item" data-step="${i}">
+        <div class="step-dot locked">${s.num}</div>
+        <div class="step-header" onclick="toggleStep(${i})">
+          <div class="step-title">Step ${s.num}: ${s.title}</div>
+          <div class="step-brief">${s.brief}</div>
+        </div>
+        <div class="step-content" id="stepContent${i}">
+          <p>${s.desc}</p>
+          <div class="activities">${s.activities.map(a => `<div class="activity">${a}</div>`).join('')}</div>
+          <div class="gate pass">
+            <div class="gate-icon">🚪</div>
+            <div class="gate-text"><strong>Gate:</strong> ${s.gate}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function toggleStep(i) {
+  const content = document.getElementById(`stepContent${i}`);
+  const item = content.closest('.step-item');
+  const dot = item.querySelector('.step-dot');
+  const isVisible = content.classList.contains('visible');
+  // Close all
+  document.querySelectorAll('.step-content').forEach(c => c.classList.remove('visible'));
+  document.querySelectorAll('.step-dot').forEach(d => { d.classList.remove('active'); d.classList.add('locked'); });
+  if (!isVisible) {
+    content.classList.add('visible');
+    dot.classList.remove('locked');
+    dot.classList.add('active');
+  }
+}
+
+// ── File Tree ──
+function initFileTree() {
+  const tree = document.getElementById('fileTree');
+  const items = [
+    { depth: 0, icon: '📁', name: 'project/', isMd: false, id: null },
+    { depth: 1, icon: '📄', name: 'CLAUDE.md', isMd: true, id: 'root',
+      content: '<strong>Project Level:</strong> Architecture philosophy (hexagonal, domain-centric). Python 3.14, UV, strict typing. Global rules: from-imports only, Protocol-based design, Sequence/Mapping types, no function > 50 lines. <strong>Agent instruction:</strong> "Before ANY change, read the CLAUDE.md in your working directory and all parents up to root."' },
+    { depth: 1, icon: '📁', name: 'src/', isMd: false, id: null },
+    { depth: 2, icon: '📄', name: 'CLAUDE.md', isMd: true, id: 'src',
+      content: '<strong>Source Level:</strong> Import conventions, error handling strategy (typed exceptions, never bare except), logging patterns (<code>structlog</code> with bound context), type annotations required on all public functions, reST docstring format.' },
+    { depth: 2, icon: '📁', name: 'domain/', isMd: false, id: null },
+    { depth: 3, icon: '📄', name: 'CLAUDE.md', isMd: true, id: 'domain',
+      content: '<strong>Domain Level:</strong> Business rules encoded here. Entity relationships and invariants. Domain events are past-tense verbs (<code>SubscriptionCreated</code>). Services depend on Protocol interfaces, NEVER concrete implementations. Zero external dependencies in this layer.' },
+    { depth: 3, icon: '📁', name: 'models/', isMd: false, id: null },
+    { depth: 4, icon: '📄', name: 'CLAUDE.md', isMd: true, id: 'models',
+      content: '<strong>Module Level:</strong> Pydantic v2 models only. Use <code>model_validator</code> for cross-field validation, never <code>__init__</code> overrides. All models frozen (immutable). Relationships as typed IDs, not references. Serialization via <code>.model_dump()</code> with explicit include/exclude.' },
+    { depth: 3, icon: '📁', name: 'services/', isMd: false, id: null },
+    { depth: 4, icon: '📄', name: 'CLAUDE.md', isMd: true, id: 'services',
+      content: '<strong>Module Level:</strong> Inject dependencies via constructor as Protocol types. Transaction boundaries at service method level. Every state change publishes domain event. No direct infra imports — all via Protocol interfaces. Error handling: raise typed domain exceptions only.' },
+    { depth: 2, icon: '📁', name: 'infra/', isMd: false, id: null },
+    { depth: 3, icon: '📄', name: 'CLAUDE.md', isMd: true, id: 'infra',
+      content: '<strong>Infrastructure Level:</strong> Provider pattern for all external dependencies. Connection pooling required. Retry with exponential backoff on transient failures. Circuit breaker after 5 consecutive failures. All providers must implement <code>health_check()</code>.' },
+    { depth: 3, icon: '📁', name: 'providers/', isMd: false, id: null },
+    { depth: 4, icon: '📄', name: 'CLAUDE.md', isMd: true, id: 'providers',
+      content: '<strong>Module Level (the IdempotencyProvider example):</strong> All providers follow: <code>_acquire_lock()</code> → <code>_validate()</code> → <code>_execute()</code> → <code>_release()</code>. Redis: SETNX for locks, explicit DEL for cleanup. InMemory: per-key threading.Lock, background sweeper. <strong>NEVER execute before acquiring the lock.</strong>' },
+    { depth: 2, icon: '📁', name: 'api/', isMd: false, id: null },
+    { depth: 3, icon: '📄', name: 'CLAUDE.md', isMd: true, id: 'api',
+      content: '<strong>API Level:</strong> Route patterns with <code>Depends()</code> for auth. Request validation via Pydantic. Standard response envelope. Error serialization to RFC 7807. Rate limiting decoration. OpenAPI metadata on every endpoint.' },
+    { depth: 1, icon: '📁', name: 'tests/', isMd: false, id: null },
+    { depth: 2, icon: '📄', name: 'CLAUDE.md', isMd: true, id: 'tests',
+      content: '<strong>Test Level:</strong> Test behavior, not implementation. Factories for test data (<code>UserFactory</code>, <code>SubscriptionFactory</code>). Mocks only at infrastructure boundary. <code>pytest</code> with <code>assert</code> (no unittest-style). Minimum coverage: 80% lines, 100% of contracts and behavioral specs.' }
+  ];
+
+  let html = '';
+  items.forEach(item => {
+    const indent = item.depth * 1.5;
+    const cls = item.isMd ? 'tree-label file-md' : 'tree-label';
+    const clickAttr = item.id ? `onclick="toggleTree('${item.id}')" id="treeLabel-${item.id}"` : '';
+    html += `<div style="padding-left:${indent}rem"><span class="${cls}" ${clickAttr}>${item.icon} ${item.name}</span>`;
+    if (item.id) html += `<div class="tree-content" id="treeContent-${item.id}">${item.content}</div>`;
+    html += `</div>`;
+  });
+  tree.innerHTML = html;
+}
+
+function toggleTree(id) {
+  const content = document.getElementById(`treeContent-${id}`);
+  const label = document.getElementById(`treeLabel-${id}`);
+  const isVisible = content.classList.contains('visible');
+  document.querySelectorAll('.tree-content').forEach(c => c.classList.remove('visible'));
+  document.querySelectorAll('.tree-label').forEach(l => l.classList.remove('active'));
+  if (!isVisible) {
+    content.classList.add('visible');
+    label.classList.add('active');
+  }
+}
+
+// ── Constraints ──
+function initConstraints() {
+  const container = document.getElementById('constraintFlow');
+  let html = '';
+  constraintData.forEach((c, i) => {
+    html += `
+      <div class="constraint-level ${c.cls}">
+        <div class="constraint-bar"></div>
+        <div class="constraint-card" onclick="toggleConstraint(this)">
+          <h4>${c.level}</h4>
+          <div class="constraint-rule">${c.rule}</div>
+          <div class="constraint-detail">${c.detail}</div>
+        </div>
+      </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function toggleConstraint(card) {
+  const wasExpanded = card.classList.contains('expanded');
+  document.querySelectorAll('.constraint-card').forEach(c => c.classList.remove('expanded'));
+  if (!wasExpanded) card.classList.add('expanded');
+}
+
+// ── Scenarios ──
+function selectScenario(key) {
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector(`[data-scenario="${key}"]`).classList.add('selected');
+  const d = scenarioData[key];
+  const detail = document.getElementById('scenarioDetail');
+  detail.innerHTML = `
+    <h4>${d.title}</h4>
+    <div class="sc-steps">
+      ${d.steps.map(s => `
+        <div class="sc-step">
+          <div class="sc-check ${s.check}">${s.check === 'yes' ? '✓' : s.check === 'skip' ? '—' : '~'}</div>
+          <span>${s.text}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  detail.classList.add('visible');
+}
+
+// ── Nav scroll ──
+function initNav() {
+  const nav = document.getElementById('topnav');
+  const links = document.querySelectorAll('.nav-links a');
+  let lastScroll = 0;
+  window.addEventListener('scroll', () => {
+    const st = window.scrollY;
+    nav.classList.toggle('hidden', st > lastScroll && st > 100);
+    lastScroll = st;
+    // Active link
+    const sections = document.querySelectorAll('section[id]');
+    let current = '';
+    sections.forEach(s => { if (st >= s.offsetTop - 200) current = s.id; });
+    links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + current));
+  });
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  setSim(false);
+  initIdeation();
+  initBuild();
+  initFileTree();
+  initConstraints();
+  initNav();
+});
+</script>
+</body>
+</html>
